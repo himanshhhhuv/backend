@@ -1,0 +1,120 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  password     String?
+  role         Role          @default(STUDENT)
+  profile      Profile?
+  room         Room?         @relation(fields: [roomId], references: [id])
+  roomId       String?
+  attendance   Attendance[]
+  leaves       Leave[]
+  approvedLeaves Leave[]     @relation("ApprovedBy")
+  complaints   Complaint[]
+  transactions Transaction[]
+  createdAt    DateTime      @default(now())
+}
+
+model Profile {
+  id           String   @id @default(cuid())
+  user         User     @relation(fields: [userId], references: [id])
+  userId       String   @unique
+  name         String
+  rollNo       String   @unique
+  phone        String
+  parentPhone  String?
+  photo        String?
+  course       String
+  year         Int
+  address      String?
+}
+
+model Room {
+  id       String @id @default(cuid())
+  roomNo   String @unique
+  floor    Int
+  capacity Int
+  occupied Int    @default(0)
+  students User[]
+}
+
+model Attendance {
+  id        String           @id @default(cuid())
+  student   User             @relation(fields: [studentId], references: [id])
+  studentId String
+  date      DateTime
+  inTime    DateTime?
+  outTime   DateTime?
+  status    AttendanceStatus @default(PRESENT)
+}
+
+model Leave {
+  id           String      @id @default(cuid())
+  student      User        @relation(fields: [studentId], references: [id])
+  studentId    String
+  fromDate     DateTime
+  toDate       DateTime
+  reason       String
+  status       LeaveStatus @default(PENDING)
+  approvedBy   User?       @relation("ApprovedBy", fields: [approvedById], references: [id])
+  approvedById String?
+  createdAt    DateTime    @default(now())
+}
+
+model Transaction {
+  id          String           @id @default(cuid())
+  student     User             @relation(fields: [studentId], references: [id])
+  studentId   String
+  amount      Float
+  type        TransactionType
+  description String
+  date        DateTime         @default(now())
+}
+
+model Complaint {
+  id         String          @id @default(cuid())
+  student    User            @relation(fields: [studentId], references: [id])
+  studentId  String
+  title      String
+  description String
+  image      String?
+  status     ComplaintStatus @default(PENDING)
+  resolvedAt DateTime?
+}
+
+enum Role {
+  STUDENT
+  WARDEN
+  ADMIN
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum TransactionType {
+  CREDIT
+  DEBIT
+}
+
+enum ComplaintStatus {
+  PENDING
+  IN_PROGRESS
+  RESOLVED
+}
