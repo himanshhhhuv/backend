@@ -1,0 +1,1018 @@
+# Hostel Management System - API Documentation
+
+Base URL: `http://localhost:3000` (adjust port as needed)
+
+## 📋 Table of Contents
+
+- [Authentication Routes](#authentication-routes)
+- [Student Routes](#student-routes)
+- [Warden Routes](#warden-routes)
+- [Admin Routes](#admin-routes)
+- [Health Check](#health-check)
+
+---
+
+## 🔐 Authentication
+
+### Authentication Routes
+
+**Base Path:** `/api/auth`
+
+| Method | Endpoint                  | Auth Required | Description          |
+| ------ | ------------------------- | ------------- | -------------------- |
+| POST   | `/api/auth/register`      | ❌ No         | Register a new user  |
+| POST   | `/api/auth/login`         | ❌ No         | Login user           |
+| POST   | `/api/auth/refresh-token` | ❌ No         | Refresh access token |
+| POST   | `/api/auth/logout`        | ❌ No         | Logout user          |
+
+#### 1. Register User
+
+```http
+POST /api/auth/register
+Content-Type: application/json
+
+{
+  "email": "student@example.com",
+  "password": "Password123!",
+  "name": "John Doe",
+  "role": "STUDENT",
+  "phoneNumber": "1234567890"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "uuid",
+      "email": "student@example.com",
+      "name": "John Doe",
+      "role": "STUDENT"
+    },
+    "accessToken": "jwt_token",
+    "refreshToken": "refresh_token"
+  }
+}
+```
+
+#### 2. Login
+
+```http
+POST /api/auth/login
+Content-Type: application/json
+
+{
+  "email": "student@example.com",
+  "password": "Password123!"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "uuid",
+      "email": "student@example.com",
+      "name": "John Doe",
+      "role": "STUDENT"
+    },
+    "accessToken": "jwt_token",
+    "refreshToken": "refresh_token"
+  }
+}
+```
+
+#### 3. Refresh Token
+
+```http
+POST /api/auth/refresh-token
+Content-Type: application/json
+
+{
+  "refreshToken": "your_refresh_token"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "accessToken": "new_jwt_token"
+  }
+}
+```
+
+#### 4. Logout
+
+```http
+POST /api/auth/logout
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Logged out successfully"
+}
+```
+
+---
+
+## 👨‍🎓 Student Routes
+
+**Base Path:** `/api/student`
+**Auth Required:** ✅ Yes (Role: STUDENT)
+**Headers Required:** `Authorization: Bearer <access_token>`
+
+| Method | Endpoint                  | Description                     |
+| ------ | ------------------------- | ------------------------------- |
+| GET    | `/api/student/me`         | Get student profile             |
+| PUT    | `/api/student/me`         | Update student profile          |
+| GET    | `/api/student/attendance` | Get student attendance records  |
+| GET    | `/api/student/canteen`    | Get canteen transaction summary |
+| GET    | `/api/student/leaves`     | List leave requests             |
+| POST   | `/api/student/leaves`     | Create leave request            |
+| GET    | `/api/student/complaints` | List student complaints         |
+| POST   | `/api/student/complaints` | Create complaint                |
+
+#### 1. Get Profile
+
+```http
+GET /api/student/me
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "email": "student@example.com",
+    "name": "John Doe",
+    "role": "STUDENT",
+    "phoneNumber": "1234567890",
+    "roomId": "room_uuid",
+    "room": {
+      "id": "room_uuid",
+      "roomNumber": "101",
+      "floor": 1
+    }
+  }
+}
+```
+
+#### 2. Update Profile
+
+```http
+PUT /api/student/me
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "name": "John Doe Updated",
+  "phoneNumber": "9876543210"
+}
+```
+
+#### 3. Get Attendance
+
+```http
+GET /api/student/attendance
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "attendance": [
+      {
+        "id": "uuid",
+        "date": "2025-11-21T00:00:00.000Z",
+        "isPresent": true,
+        "remarks": "Present"
+      }
+    ],
+    "summary": {
+      "totalDays": 30,
+      "presentDays": 28,
+      "absentDays": 2,
+      "attendancePercentage": 93.33
+    }
+  }
+}
+```
+
+#### 4. Get Canteen Summary
+
+```http
+GET /api/student/canteen
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "transactions": [
+      {
+        "id": "uuid",
+        "amount": 150,
+        "type": "DEBIT",
+        "description": "Lunch",
+        "createdAt": "2025-11-21T12:00:00.000Z"
+      }
+    ],
+    "balance": 500,
+    "totalSpent": 1500
+  }
+}
+```
+
+#### 5. List Leave Requests
+
+```http
+GET /api/student/leaves
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid",
+      "startDate": "2025-12-01",
+      "endDate": "2025-12-05",
+      "reason": "Family function",
+      "status": "PENDING",
+      "createdAt": "2025-11-21T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+#### 6. Create Leave Request
+
+```http
+POST /api/student/leaves
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "startDate": "2025-12-01",
+  "endDate": "2025-12-05",
+  "reason": "Family function"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "startDate": "2025-12-01",
+    "endDate": "2025-12-05",
+    "reason": "Family function",
+    "status": "PENDING"
+  }
+}
+```
+
+#### 7. List Complaints
+
+```http
+GET /api/student/complaints
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid",
+      "title": "AC not working",
+      "description": "Room AC has stopped working",
+      "status": "PENDING",
+      "createdAt": "2025-11-21T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+#### 8. Create Complaint
+
+```http
+POST /api/student/complaints
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "title": "AC not working",
+  "description": "Room AC has stopped working since yesterday"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "title": "AC not working",
+    "description": "Room AC has stopped working since yesterday",
+    "status": "PENDING",
+    "createdAt": "2025-11-21T10:00:00.000Z"
+  }
+}
+```
+
+---
+
+## 👮 Warden Routes
+
+**Base Path:** `/api/warden`
+**Auth Required:** ✅ Yes (Role: WARDEN or ADMIN)
+**Headers Required:** `Authorization: Bearer <access_token>`
+
+| Method | Endpoint                            | Description                         |
+| ------ | ----------------------------------- | ----------------------------------- |
+| GET    | `/api/warden/leaves/pending`        | Get pending leave requests          |
+| PATCH  | `/api/warden/leaves/:id/approve`    | Approve leave request               |
+| PATCH  | `/api/warden/leaves/:id/reject`     | Reject leave request                |
+| POST   | `/api/warden/attendance/mark`       | Mark attendance for students        |
+| GET    | `/api/warden/attendance/:studentId` | Get attendance for specific student |
+| GET    | `/api/warden/complaints`            | List all complaints                 |
+| PATCH  | `/api/warden/complaints/:id`        | Update complaint status             |
+
+#### 1. Get Pending Leaves
+
+```http
+GET /api/warden/leaves/pending
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid",
+      "student": {
+        "id": "student_uuid",
+        "name": "John Doe",
+        "email": "student@example.com"
+      },
+      "startDate": "2025-12-01",
+      "endDate": "2025-12-05",
+      "reason": "Family function",
+      "status": "PENDING"
+    }
+  ]
+}
+```
+
+#### 2. Approve Leave
+
+```http
+PATCH /api/warden/leaves/:id/approve
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "remarks": "Approved for family emergency"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "status": "APPROVED",
+    "remarks": "Approved for family emergency"
+  }
+}
+```
+
+#### 3. Reject Leave
+
+```http
+PATCH /api/warden/leaves/:id/reject
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "remarks": "Insufficient reason provided"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "status": "REJECTED",
+    "remarks": "Insufficient reason provided"
+  }
+}
+```
+
+#### 4. Mark Attendance
+
+```http
+POST /api/warden/attendance/mark
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "studentIds": ["student_uuid_1", "student_uuid_2"],
+  "date": "2025-11-21",
+  "isPresent": true,
+  "remarks": "Present"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "marked": 2,
+    "date": "2025-11-21"
+  }
+}
+```
+
+#### 5. Get Student Attendance
+
+```http
+GET /api/warden/attendance/:studentId
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "student": {
+      "id": "student_uuid",
+      "name": "John Doe",
+      "email": "student@example.com"
+    },
+    "attendance": [
+      {
+        "date": "2025-11-21",
+        "isPresent": true,
+        "remarks": "Present"
+      }
+    ],
+    "summary": {
+      "totalDays": 30,
+      "presentDays": 28,
+      "attendancePercentage": 93.33
+    }
+  }
+}
+```
+
+#### 6. List All Complaints
+
+```http
+GET /api/warden/complaints
+Authorization: Bearer <access_token>
+```
+
+**Query Parameters:**
+
+- `status` (optional): Filter by status (PENDING, IN_PROGRESS, RESOLVED)
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid",
+      "title": "AC not working",
+      "description": "Room AC has stopped working",
+      "status": "PENDING",
+      "student": {
+        "id": "student_uuid",
+        "name": "John Doe",
+        "room": {
+          "roomNumber": "101"
+        }
+      },
+      "createdAt": "2025-11-21T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+#### 7. Update Complaint
+
+```http
+PATCH /api/warden/complaints/:id
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "status": "IN_PROGRESS",
+  "remarks": "Maintenance team assigned"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "status": "IN_PROGRESS",
+    "remarks": "Maintenance team assigned"
+  }
+}
+```
+
+---
+
+## 👔 Admin Routes
+
+**Base Path:** `/api/admin`
+**Auth Required:** ✅ Yes (Role: ADMIN)
+**Headers Required:** `Authorization: Bearer <access_token>`
+
+| Method | Endpoint                          | Description                |
+| ------ | --------------------------------- | -------------------------- |
+| POST   | `/api/admin/users`                | Create new user            |
+| GET    | `/api/admin/users`                | List all users             |
+| POST   | `/api/admin/rooms`                | Create new room            |
+| PATCH  | `/api/admin/rooms/:id/assign`     | Assign room to student     |
+| GET    | `/api/admin/reports/summary`      | Get summary report         |
+| POST   | `/api/admin/canteen/transactions` | Create canteen transaction |
+
+#### 1. Create User
+
+```http
+POST /api/admin/users
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "email": "newuser@example.com",
+  "password": "Password123!",
+  "name": "Jane Smith",
+  "role": "STUDENT",
+  "phoneNumber": "1234567890"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "email": "newuser@example.com",
+    "name": "Jane Smith",
+    "role": "STUDENT"
+  }
+}
+```
+
+#### 2. List Users
+
+```http
+GET /api/admin/users
+Authorization: Bearer <access_token>
+```
+
+**Query Parameters:**
+
+- `role` (optional): Filter by role (STUDENT, WARDEN, ADMIN)
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Items per page (default: 10)
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "users": [
+      {
+        "id": "uuid",
+        "email": "student@example.com",
+        "name": "John Doe",
+        "role": "STUDENT",
+        "phoneNumber": "1234567890",
+        "room": {
+          "roomNumber": "101"
+        }
+      }
+    ],
+    "pagination": {
+      "total": 50,
+      "page": 1,
+      "limit": 10,
+      "totalPages": 5
+    }
+  }
+}
+```
+
+#### 3. Create Room
+
+```http
+POST /api/admin/rooms
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "roomNumber": "201",
+  "floor": 2,
+  "capacity": 3,
+  "type": "SHARED"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "roomNumber": "201",
+    "floor": 2,
+    "capacity": 3,
+    "type": "SHARED",
+    "occupiedCount": 0
+  }
+}
+```
+
+#### 4. Assign Room
+
+```http
+PATCH /api/admin/rooms/:id/assign
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "studentId": "student_uuid"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "room": {
+      "id": "room_uuid",
+      "roomNumber": "201",
+      "occupiedCount": 1
+    },
+    "student": {
+      "id": "student_uuid",
+      "name": "John Doe"
+    }
+  }
+}
+```
+
+#### 5. Get Summary Report
+
+```http
+GET /api/admin/reports/summary
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "totalStudents": 150,
+    "totalRooms": 50,
+    "occupiedRooms": 45,
+    "pendingLeaves": 5,
+    "pendingComplaints": 3,
+    "attendanceToday": {
+      "present": 140,
+      "absent": 10,
+      "percentage": 93.33
+    }
+  }
+}
+```
+
+#### 6. Create Canteen Transaction
+
+```http
+POST /api/admin/canteen/transactions
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "studentId": "student_uuid",
+  "amount": 200,
+  "type": "CREDIT",
+  "description": "Monthly allowance"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "studentId": "student_uuid",
+    "amount": 200,
+    "type": "CREDIT",
+    "description": "Monthly allowance",
+    "balance": 700,
+    "createdAt": "2025-11-21T10:00:00.000Z"
+  }
+}
+```
+
+---
+
+## ❤️ Health Check
+
+#### Health Check
+
+```http
+GET /health
+```
+
+**Response:**
+
+```json
+{
+  "status": "ok"
+}
+```
+
+---
+
+## 🔑 Authentication Flow
+
+### How to use protected routes:
+
+1. **Login or Register** to get access token and refresh token
+2. **Include Bearer Token** in all protected route requests:
+   ```http
+   Authorization: Bearer <your_access_token>
+   ```
+3. **Refresh Token** when access token expires:
+   ```http
+   POST /api/auth/refresh-token
+   {
+     "refreshToken": "your_refresh_token"
+   }
+   ```
+
+---
+
+## 📝 Common Response Formats
+
+### Success Response
+
+```json
+{
+  "success": true,
+  "data": {
+    /* response data */
+  }
+}
+```
+
+### Error Response
+
+```json
+{
+  "success": false,
+  "message": "Error message",
+  "error": {
+    "code": "ERROR_CODE",
+    "details": "Additional error details"
+  }
+}
+```
+
+### Validation Error Response
+
+```json
+{
+  "success": false,
+  "message": "Validation failed",
+  "errors": [
+    {
+      "field": "email",
+      "message": "Invalid email format"
+    }
+  ]
+}
+```
+
+---
+
+## 🚨 HTTP Status Codes
+
+| Code | Description                          |
+| ---- | ------------------------------------ |
+| 200  | Success                              |
+| 201  | Created                              |
+| 400  | Bad Request (validation error)       |
+| 401  | Unauthorized (invalid/missing token) |
+| 403  | Forbidden (insufficient permissions) |
+| 404  | Not Found                            |
+| 409  | Conflict (duplicate resource)        |
+| 500  | Internal Server Error                |
+
+---
+
+## 🧪 Testing Examples
+
+### Using cURL
+
+```bash
+# Login
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"student@example.com","password":"Password123!"}'
+
+# Get Profile (with token)
+curl -X GET http://localhost:3000/api/student/me \
+  -H "Authorization: Bearer <your_token>"
+
+# Create Leave Request
+curl -X POST http://localhost:3000/api/student/leaves \
+  -H "Authorization: Bearer <your_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"startDate":"2025-12-01","endDate":"2025-12-05","reason":"Family function"}'
+```
+
+### Using JavaScript (Fetch)
+
+```javascript
+// Login
+const login = async () => {
+  const response = await fetch("http://localhost:3000/api/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: "student@example.com",
+      password: "Password123!",
+    }),
+  });
+  const data = await response.json();
+  return data.data.accessToken;
+};
+
+// Get Profile
+const getProfile = async (token) => {
+  const response = await fetch("http://localhost:3000/api/student/me", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return await response.json();
+};
+```
+
+### Using Postman/Thunder Client
+
+1. Create a new request
+2. Set the method and URL
+3. Add `Authorization` header with value `Bearer <token>` for protected routes
+4. Add request body for POST/PUT/PATCH requests
+5. Send the request
+
+---
+
+## 📦 Response Data Models
+
+### User Object
+
+```json
+{
+  "id": "uuid",
+  "email": "user@example.com",
+  "name": "User Name",
+  "role": "STUDENT|WARDEN|ADMIN",
+  "phoneNumber": "1234567890",
+  "roomId": "room_uuid"
+}
+```
+
+### Room Object
+
+```json
+{
+  "id": "uuid",
+  "roomNumber": "101",
+  "floor": 1,
+  "capacity": 3,
+  "type": "SHARED|SINGLE",
+  "occupiedCount": 2
+}
+```
+
+### Leave Object
+
+```json
+{
+  "id": "uuid",
+  "studentId": "student_uuid",
+  "startDate": "2025-12-01",
+  "endDate": "2025-12-05",
+  "reason": "Family function",
+  "status": "PENDING|APPROVED|REJECTED",
+  "remarks": "Optional remarks"
+}
+```
+
+### Complaint Object
+
+```json
+{
+  "id": "uuid",
+  "studentId": "student_uuid",
+  "title": "Issue title",
+  "description": "Detailed description",
+  "status": "PENDING|IN_PROGRESS|RESOLVED",
+  "remarks": "Optional remarks"
+}
+```
+
+### Attendance Object
+
+```json
+{
+  "id": "uuid",
+  "studentId": "student_uuid",
+  "date": "2025-11-21",
+  "isPresent": true,
+  "remarks": "Optional remarks"
+}
+```
+
+---
+
+## 📚 Notes for Frontend Developers
+
+1. **Base URL**: Replace `http://localhost:3000` with your actual backend URL
+2. **Token Storage**: Store access token securely (e.g., httpOnly cookies, localStorage with caution)
+3. **Token Refresh**: Implement automatic token refresh when receiving 401 errors
+4. **Error Handling**: Always handle errors gracefully and show user-friendly messages
+5. **Loading States**: Show loading indicators during API calls
+6. **Validation**: Implement client-side validation matching the backend rules
+7. **CORS**: Backend has CORS enabled with credentials support
+8. **Date Format**: All dates are in ISO 8601 format (YYYY-MM-DD or full ISO string)
+
+---
+
+**Last Updated**: November 21, 2025
+**Version**: 1.0.0
