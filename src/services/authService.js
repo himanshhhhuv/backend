@@ -68,7 +68,7 @@ export const registerUser = async (data) => {
         data: {
           email,
           password: hashedPassword,
-          role: role || "STUDENT",
+          role: role || "STUDENT", // Use provided role or default to STUDENT
         },
       });
 

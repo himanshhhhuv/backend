@@ -1014,5 +1014,95 @@ const getProfile = async (token) => {
 
 ---
 
+## 🔧 Troubleshooting Common Issues
+
+### Issue: 403 Forbidden Error on Student Routes
+
+**Problem**: Getting `403 Forbidden` when accessing student routes like `/api/student/attendance`
+
+**Solution**: Make sure the user is registered with the correct role:
+
+```json
+// When registering, include the role field:
+{
+  "email": "student@example.com",
+  "password": "Password123!",
+  "name": "John Doe",
+  "role": "STUDENT", // ← Must be "STUDENT" for student routes
+  "rollNo": "S12345",
+  "phone": "1234567890",
+  "course": "Computer Science",
+  "year": 2
+}
+```
+
+**Verify Role in Token**: After login, check the decoded JWT token to ensure `role: "STUDENT"`
+
+### How Students Check Their Attendance
+
+**Step 1**: Login as a student
+
+```javascript
+const response = await fetch("http://localhost:3000/api/auth/login", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    email: "student@example.com",
+    password: "Password123!",
+  }),
+});
+const { data } = await response.json();
+const token = data.tokens.accessToken;
+```
+
+**Step 2**: Get attendance with the token
+
+```javascript
+const attendanceResponse = await fetch(
+  "http://localhost:3000/api/student/attendance",
+  {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }
+);
+const attendanceData = await attendanceResponse.json();
+console.log(attendanceData.attendance); // Array of attendance records
+```
+
+**Expected Response**:
+
+```json
+{
+  "attendance": {
+    "attendance": [
+      {
+        "id": "uuid",
+        "date": "2025-11-21T00:00:00.000Z",
+        "isPresent": true,
+        "remarks": "Present"
+      }
+    ],
+    "summary": {
+      "totalDays": 30,
+      "presentDays": 28,
+      "absentDays": 2,
+      "attendancePercentage": 93.33
+    }
+  }
+}
+```
+
+### Common Error Codes
+
+| Error            | Cause                       | Solution                                             |
+| ---------------- | --------------------------- | ---------------------------------------------------- |
+| 401 Unauthorized | Missing or invalid token    | Login again to get a new token                       |
+| 403 Forbidden    | Wrong role for the endpoint | Check user role (must be STUDENT for student routes) |
+| 404 Not Found    | Wrong endpoint URL          | Verify the endpoint path                             |
+| 500 Server Error | Backend issue               | Check server logs                                    |
+
+---
+
 **Last Updated**: November 21, 2025
 **Version**: 1.0.0

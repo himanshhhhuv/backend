@@ -18,12 +18,20 @@ export const getPendingLeaves = catchAsync(async (req, res) => {
 });
 
 export const approveLeave = catchAsync(async (req, res) => {
-  const leave = await updateLeaveStatus(req.params.id, "APPROVED", req.user.id);
+  const leave = await updateLeaveStatus(
+    req.params.id,
+    "APPROVED",
+    req.user.userId
+  );
   res.json({ leave });
 });
 
 export const rejectLeave = catchAsync(async (req, res) => {
-  const leave = await updateLeaveStatus(req.params.id, "REJECTED", req.user.id);
+  const leave = await updateLeaveStatus(
+    req.params.id,
+    "REJECTED",
+    req.user.userId
+  );
   res.json({ leave });
 });
 

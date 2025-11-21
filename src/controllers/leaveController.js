@@ -1,13 +1,18 @@
-import catchAsync from '../utils/catchAsync.js';
-import { createLeaveRequest, listLeaves, listPendingLeaves, updateLeaveStatus } from '../services/leaveService.js';
+import catchAsync from "../utils/catchAsync.js";
+import {
+  createLeaveRequest,
+  listLeaves,
+  listPendingLeaves,
+  updateLeaveStatus,
+} from "../services/leaveService.js";
 
 export const createLeave = catchAsync(async (req, res) => {
-  const leave = await createLeaveRequest(req.user.id, req.body);
+  const leave = await createLeaveRequest(req.user.userId, req.body);
   res.status(201).json({ leave });
 });
 
 export const getLeaves = catchAsync(async (req, res) => {
-  const leaves = await listLeaves(req.user.id);
+  const leaves = await listLeaves(req.user.userId);
   res.json({ leaves });
 });
 
@@ -17,7 +22,10 @@ export const getPendingLeaves = catchAsync(async (req, res) => {
 });
 
 export const changeLeaveStatus = catchAsync(async (req, res) => {
-  const leave = await updateLeaveStatus(req.params.id, req.body.status, req.user.id);
+  const leave = await updateLeaveStatus(
+    req.params.id,
+    req.body.status,
+    req.user.userId
+  );
   res.json({ leave });
 });
-
