@@ -36,22 +36,40 @@ Content-Type: application/json
   "password": "Password123!",
   "name": "John Doe",
   "role": "STUDENT",
-  "phoneNumber": "1234567890"
+  "rollNo": "S12345",
+  "phone": "1234567890",
+  "course": "Computer Science",
+  "year": 2,
+  "parentPhone": "9876543210",
+  "address": "123 Main St, City"
 }
 ```
+
+**Required Fields:** `email`, `password`, `name`, `rollNo`, `phone`, `course`, `year`  
+**Optional Fields:** `role` (defaults to STUDENT), `parentPhone`, `address`
 
 **Response:**
 
 ```json
 {
-  "success": true,
-  "data": {
-    "user": {
-      "id": "uuid",
-      "email": "student@example.com",
+  "user": {
+    "id": "uuid",
+    "email": "student@example.com",
+    "role": "STUDENT",
+    "createdAt": "2025-11-22T10:00:00.000Z",
+    "profile": {
+      "id": "profile_uuid",
       "name": "John Doe",
-      "role": "STUDENT"
-    },
+      "rollNo": "S12345",
+      "phone": "1234567890",
+      "parentPhone": "9876543210",
+      "photo": null,
+      "course": "Computer Science",
+      "year": 2,
+      "address": "123 Main St, City"
+    }
+  },
+  "tokens": {
     "accessToken": "jwt_token",
     "refreshToken": "refresh_token"
   }
@@ -74,14 +92,25 @@ Content-Type: application/json
 
 ```json
 {
-  "success": true,
-  "data": {
-    "user": {
-      "id": "uuid",
-      "email": "student@example.com",
+  "user": {
+    "id": "uuid",
+    "email": "student@example.com",
+    "role": "STUDENT",
+    "roomId": null,
+    "createdAt": "2025-11-22T10:00:00.000Z",
+    "profile": {
+      "id": "profile_uuid",
       "name": "John Doe",
-      "role": "STUDENT"
-    },
+      "rollNo": "S12345",
+      "phone": "1234567890",
+      "parentPhone": "9876543210",
+      "photo": null,
+      "course": "Computer Science",
+      "year": 2,
+      "address": "123 Main St, City"
+    }
+  },
+  "tokens": {
     "accessToken": "jwt_token",
     "refreshToken": "refresh_token"
   }
@@ -103,10 +132,8 @@ Content-Type: application/json
 
 ```json
 {
-  "success": true,
-  "data": {
-    "accessToken": "new_jwt_token"
-  }
+  "accessToken": "new_jwt_token",
+  "refreshToken": "new_refresh_token"
 }
 ```
 
@@ -120,7 +147,6 @@ POST /api/auth/logout
 
 ```json
 {
-  "success": true,
   "message": "Logged out successfully"
 }
 ```
@@ -155,19 +181,10 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "success": true,
-  "data": {
-    "id": "uuid",
-    "email": "student@example.com",
-    "name": "John Doe",
-    "role": "STUDENT",
-    "phoneNumber": "1234567890",
-    "roomId": "room_uuid",
-    "room": {
-      "id": "room_uuid",
-      "roomNumber": "101",
-      "floor": 1
-    }
+  "message": "Student profile placeholder",
+  "user": {
+    "userId": "uuid",
+    "role": "STUDENT"
   }
 }
 ```
@@ -181,7 +198,21 @@ Content-Type: application/json
 
 {
   "name": "John Doe Updated",
-  "phoneNumber": "9876543210"
+  "phone": "9876543210",
+  "parentPhone": "1112223333",
+  "address": "New Address"
+}
+```
+
+**Response:**
+
+```json
+{
+  "message": "Update profile placeholder",
+  "data": {
+    "name": "John Doe Updated",
+    "phone": "9876543210"
+  }
 }
 ```
 
@@ -196,14 +227,14 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "success": true,
-  "data": {
-    "attendance": [
+  "attendance": {
+    "records": [
       {
         "id": "uuid",
         "date": "2025-11-21T00:00:00.000Z",
-        "isPresent": true,
-        "remarks": "Present"
+        "inTime": "2025-11-21T08:30:00.000Z",
+        "outTime": "2025-11-21T18:00:00.000Z",
+        "status": "PRESENT"
       }
     ],
     "summary": {
@@ -227,20 +258,19 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "success": true,
-  "data": {
-    "transactions": [
-      {
-        "id": "uuid",
-        "amount": 150,
-        "type": "DEBIT",
-        "description": "Lunch",
-        "createdAt": "2025-11-21T12:00:00.000Z"
-      }
-    ],
-    "balance": 500,
-    "totalSpent": 1500
-  }
+  "balance": {
+    "studentId": "uuid",
+    "balance": 500
+  },
+  "transactions": [
+    {
+      "id": "uuid",
+      "amount": 150,
+      "type": "DEBIT",
+      "description": "Lunch",
+      "date": "2025-11-21T12:00:00.000Z"
+    }
+  ]
 }
 ```
 
@@ -255,12 +285,11 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "success": true,
-  "data": [
+  "leaves": [
     {
       "id": "uuid",
-      "startDate": "2025-12-01",
-      "endDate": "2025-12-05",
+      "fromDate": "2025-12-01T00:00:00.000Z",
+      "toDate": "2025-12-05T00:00:00.000Z",
       "reason": "Family function",
       "status": "PENDING",
       "createdAt": "2025-11-21T10:00:00.000Z"
@@ -277,8 +306,8 @@ Authorization: Bearer <access_token>
 Content-Type: application/json
 
 {
-  "startDate": "2025-12-01",
-  "endDate": "2025-12-05",
+  "fromDate": "2025-12-01",
+  "toDate": "2025-12-05",
   "reason": "Family function"
 }
 ```
@@ -287,11 +316,10 @@ Content-Type: application/json
 
 ```json
 {
-  "success": true,
-  "data": {
+  "leave": {
     "id": "uuid",
-    "startDate": "2025-12-01",
-    "endDate": "2025-12-05",
+    "fromDate": "2025-12-01T00:00:00.000Z",
+    "toDate": "2025-12-05T00:00:00.000Z",
     "reason": "Family function",
     "status": "PENDING"
   }
@@ -309,14 +337,22 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "success": true,
-  "data": [
+  "complaints": [
     {
       "id": "uuid",
       "title": "AC not working",
       "description": "Room AC has stopped working",
+      "image": null,
       "status": "PENDING",
-      "createdAt": "2025-11-21T10:00:00.000Z"
+      "resolvedAt": null,
+      "student": {
+        "id": "student_uuid",
+        "email": "student@example.com",
+        "profile": {
+          "name": "John Doe",
+          "rollNo": "S12345"
+        }
+      }
     }
   ]
 }
@@ -331,21 +367,34 @@ Content-Type: application/json
 
 {
   "title": "AC not working",
-  "description": "Room AC has stopped working since yesterday"
+  "description": "Room AC has stopped working since yesterday",
+  "image": "https://example.com/image.jpg"
 }
 ```
+
+**Required Fields:** `title`, `description`  
+**Optional Fields:** `image` (URL to complaint image)
 
 **Response:**
 
 ```json
 {
-  "success": true,
-  "data": {
+  "complaint": {
     "id": "uuid",
+    "studentId": "student_uuid",
     "title": "AC not working",
     "description": "Room AC has stopped working since yesterday",
+    "image": "https://example.com/image.jpg",
     "status": "PENDING",
-    "createdAt": "2025-11-21T10:00:00.000Z"
+    "resolvedAt": null,
+    "student": {
+      "id": "student_uuid",
+      "email": "student@example.com",
+      "profile": {
+        "name": "John Doe",
+        "rollNo": "S12345"
+      }
+    }
   }
 }
 ```
@@ -517,27 +566,35 @@ Authorization: Bearer <access_token>
 
 **Query Parameters:**
 
-- `status` (optional): Filter by status (PENDING, IN_PROGRESS, RESOLVED)
+- `status` (optional): Filter by status (`PENDING`, `IN_PROGRESS`, `RESOLVED`)
 
 **Response:**
 
 ```json
 {
-  "success": true,
-  "data": [
+  "complaints": [
     {
       "id": "uuid",
+      "studentId": "student_uuid",
       "title": "AC not working",
       "description": "Room AC has stopped working",
+      "image": null,
       "status": "PENDING",
+      "resolvedAt": null,
       "student": {
         "id": "student_uuid",
-        "name": "John Doe",
+        "email": "student@example.com",
+        "roomId": "room_uuid",
+        "profile": {
+          "name": "John Doe",
+          "rollNo": "S12345",
+          "phone": "1234567890"
+        },
         "room": {
-          "roomNumber": "101"
+          "roomNo": "101",
+          "floor": 1
         }
-      },
-      "createdAt": "2025-11-21T10:00:00.000Z"
+      }
     }
   ]
 }
@@ -556,18 +613,34 @@ Content-Type: application/json
 }
 ```
 
+**Valid Status Values:** `PENDING`, `IN_PROGRESS`, `RESOLVED`  
+**Optional Fields:** `remarks`
+
 **Response:**
 
 ```json
 {
-  "success": true,
-  "data": {
+  "complaint": {
     "id": "uuid",
+    "studentId": "student_uuid",
+    "title": "AC not working",
+    "description": "Room AC has stopped working",
+    "image": null,
     "status": "IN_PROGRESS",
-    "remarks": "Maintenance team assigned"
+    "resolvedAt": null,
+    "student": {
+      "id": "student_uuid",
+      "email": "student@example.com",
+      "profile": {
+        "name": "John Doe",
+        "rollNo": "S12345"
+      }
+    }
   }
 }
 ```
+
+**Note:** When status is set to `RESOLVED`, the `resolvedAt` field is automatically set to the current timestamp.
 
 ---
 
@@ -940,10 +1013,21 @@ const getProfile = async (token) => {
 {
   "id": "uuid",
   "email": "user@example.com",
-  "name": "User Name",
   "role": "STUDENT|WARDEN|ADMIN",
-  "phoneNumber": "1234567890",
-  "roomId": "room_uuid"
+  "roomId": "room_uuid",
+  "createdAt": "2025-11-22T10:00:00.000Z",
+  "profile": {
+    "id": "profile_uuid",
+    "userId": "uuid",
+    "name": "User Name",
+    "rollNo": "S12345",
+    "phone": "1234567890",
+    "parentPhone": "9876543210",
+    "photo": "https://example.com/photo.jpg",
+    "course": "Computer Science",
+    "year": 2,
+    "address": "123 Main St, City"
+  }
 }
 ```
 
@@ -952,11 +1036,10 @@ const getProfile = async (token) => {
 ```json
 {
   "id": "uuid",
-  "roomNumber": "101",
+  "roomNo": "101",
   "floor": 1,
   "capacity": 3,
-  "type": "SHARED|SINGLE",
-  "occupiedCount": 2
+  "occupied": 2
 }
 ```
 
@@ -966,11 +1049,12 @@ const getProfile = async (token) => {
 {
   "id": "uuid",
   "studentId": "student_uuid",
-  "startDate": "2025-12-01",
-  "endDate": "2025-12-05",
+  "fromDate": "2025-12-01T00:00:00.000Z",
+  "toDate": "2025-12-05T00:00:00.000Z",
   "reason": "Family function",
   "status": "PENDING|APPROVED|REJECTED",
-  "remarks": "Optional remarks"
+  "approvedById": "warden_uuid",
+  "createdAt": "2025-11-22T10:00:00.000Z"
 }
 ```
 
@@ -982,8 +1066,9 @@ const getProfile = async (token) => {
   "studentId": "student_uuid",
   "title": "Issue title",
   "description": "Detailed description",
+  "image": "https://example.com/image.jpg",
   "status": "PENDING|IN_PROGRESS|RESOLVED",
-  "remarks": "Optional remarks"
+  "resolvedAt": "2025-11-22T15:00:00.000Z"
 }
 ```
 
@@ -993,9 +1078,23 @@ const getProfile = async (token) => {
 {
   "id": "uuid",
   "studentId": "student_uuid",
-  "date": "2025-11-21",
-  "isPresent": true,
-  "remarks": "Optional remarks"
+  "date": "2025-11-21T00:00:00.000Z",
+  "inTime": "2025-11-21T08:30:00.000Z",
+  "outTime": "2025-11-21T18:00:00.000Z",
+  "status": "PRESENT|ABSENT|LATE"
+}
+```
+
+### Transaction Object
+
+```json
+{
+  "id": "uuid",
+  "studentId": "student_uuid",
+  "amount": 150.0,
+  "type": "CREDIT|DEBIT",
+  "description": "Lunch payment",
+  "date": "2025-11-21T12:00:00.000Z"
 }
 ```
 
@@ -1104,5 +1203,21 @@ console.log(attendanceData.attendance); // Array of attendance records
 
 ---
 
-**Last Updated**: November 21, 2025
-**Version**: 1.0.0
+**Last Updated**: November 22, 2025  
+**Version**: 1.1.0
+
+## 📝 Changelog
+
+### Version 1.1.0 (November 22, 2025)
+
+- ✅ Implemented proper complaint service with database operations
+- ✅ Fixed registration to use correct user roles (no longer hardcoded to ADMIN)
+- ✅ Updated all API response examples to match actual implementation
+- ✅ Added proper field validation and error handling for complaints
+- ✅ Added `resolvedAt` timestamp for resolved complaints
+- ✅ Improved complaint listing with student and room details
+- ✅ Updated data models to reflect actual Prisma schema
+
+### Version 1.0.0 (November 21, 2025)
+
+- Initial API documentation release

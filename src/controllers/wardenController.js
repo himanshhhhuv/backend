@@ -46,11 +46,13 @@ export const getStudentAttendanceById = catchAsync(async (req, res) => {
 });
 
 export const listAllComplaints = catchAsync(async (req, res) => {
-  const complaints = await listComplaints();
+  const { status } = req.query;
+  const complaints = await listComplaints({ status });
   res.json({ complaints });
 });
 
 export const updateComplaint = catchAsync(async (req, res) => {
-  const complaint = await updateComplaintStatus(req.params.id, req.body.status);
+  const { status, remarks } = req.body;
+  const complaint = await updateComplaintStatus(req.params.id, status, remarks);
   res.json({ complaint });
 });
