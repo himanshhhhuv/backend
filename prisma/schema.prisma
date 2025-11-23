@@ -13,7 +13,7 @@ model User {
   password     String?
   role         Role          @default(STUDENT)
   profile      Profile?
-  room         Room?         @relation(fields: [roomId], references: [id])
+  room         Room?         @relation(fields: [roomId], references: [id], onDelete: SetNull)
   roomId       String?
   attendance   Attendance[]
   leaves       Leave[]
@@ -25,7 +25,7 @@ model User {
 
 model Profile {
   id           String   @id @default(cuid())
-  user         User     @relation(fields: [userId], references: [id])
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId       String   @unique
   name         String
   rollNo       String   @unique
@@ -48,7 +48,7 @@ model Room {
 
 model Attendance {
   id        String           @id @default(cuid())
-  student   User             @relation(fields: [studentId], references: [id])
+  student   User             @relation(fields: [studentId], references: [id], onDelete: Cascade)
   studentId String
   date      DateTime
   inTime    DateTime?
@@ -58,20 +58,20 @@ model Attendance {
 
 model Leave {
   id           String      @id @default(cuid())
-  student      User        @relation(fields: [studentId], references: [id])
+  student      User        @relation(fields: [studentId], references: [id], onDelete: Cascade)
   studentId    String
   fromDate     DateTime
   toDate       DateTime
   reason       String
   status       LeaveStatus @default(PENDING)
-  approvedBy   User?       @relation("ApprovedBy", fields: [approvedById], references: [id])
+  approvedBy   User?       @relation("ApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
   approvedById String?
   createdAt    DateTime    @default(now())
 }
 
 model Transaction {
   id          String           @id @default(cuid())
-  student     User             @relation(fields: [studentId], references: [id])
+  student     User             @relation(fields: [studentId], references: [id], onDelete: Cascade)
   studentId   String
   amount      Float
   type        TransactionType
@@ -81,7 +81,7 @@ model Transaction {
 
 model Complaint {
   id         String          @id @default(cuid())
-  student    User            @relation(fields: [studentId], references: [id])
+  student    User            @relation(fields: [studentId], references: [id], onDelete: Cascade)
   studentId  String
   title      String
   description String
