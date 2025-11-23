@@ -347,6 +347,76 @@ export const assignRoom = catchAsync(async (req, res) => {
 });
 
 /**
+ * Delete a user
+ */
+export const deleteUser = catchAsync(async (req, res) => {
+  const { id: userId } = req.params;
+
+  // Check if user exists
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      profile: {
+        select: {
+          name: true,
+          rollNo: true,
+        },
+      },
+    },
+  });
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  // Prevent deletion of the last admin
+  if (user.role === "ADMIN") {
+    const adminCount = await prisma.user.count({
+      where: { role: "ADMIN" },
+    });
+
+    if (adminCount <= 1) {
+      throw new ApiError(
+        400,
+        "Cannot delete the last admin user. Please create another admin first."
+      );
+    }
+  }
+
+  // If user is assigned to a room, update room's occupied count
+  if (user.roomId) {
+    await prisma.$transaction([
+      prisma.room.update({
+        where: { id: user.roomId },
+        data: {
+          occupied: {
+            decrement: 1,
+          },
+        },
+      }),
+      prisma.user.delete({
+        where: { id: userId },
+      }),
+    ]);
+  } else {
+    await prisma.user.delete({
+      where: { id: userId },
+    });
+  }
+
+  res.json({
+    success: true,
+    message: "User deleted successfully",
+    data: {
+      id: userId,
+      email: user.email,
+      name: user.profile?.name,
+      role: user.role,
+    },
+  });
+});
+
+/**
  * Get summary report with statistics
  */
 export const getSummaryReport = catchAsync(async (req, res) => {

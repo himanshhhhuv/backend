@@ -654,6 +654,7 @@ Content-Type: application/json
 | ------ | --------------------------------- | -------------------------- |
 | POST   | `/api/admin/users`                | Create new user            |
 | GET    | `/api/admin/users`                | List all users             |
+| DELETE | `/api/admin/users/:id`            | Delete a user              |
 | POST   | `/api/admin/rooms`                | Create new room            |
 | PATCH  | `/api/admin/rooms/:id/assign`     | Assign room to student     |
 | GET    | `/api/admin/reports/summary`      | Get summary report         |
@@ -730,7 +731,55 @@ Authorization: Bearer <access_token>
 }
 ```
 
-#### 3. Create Room
+#### 3. Delete User
+
+```http
+DELETE /api/admin/users/:id
+Authorization: Bearer <access_token>
+```
+
+**Path Parameters:**
+
+- `id` (required): User ID to delete
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "User deleted successfully",
+  "data": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "name": "John Doe",
+    "role": "STUDENT"
+  }
+}
+```
+
+**Notes:**
+
+- If the user is assigned to a room, the room's occupied count is automatically decremented
+- Cannot delete the last admin user (at least one admin must remain)
+- All related data (profile, attendance, leaves, complaints, etc.) are automatically deleted
+
+**Error Responses:**
+
+```json
+// User not found
+{
+  "success": false,
+  "message": "User not found"
+}
+
+// Attempting to delete last admin
+{
+  "success": false,
+  "message": "Cannot delete the last admin user. Please create another admin first."
+}
+```
+
+#### 4. Create Room
 
 ```http
 POST /api/admin/rooms
@@ -967,6 +1016,10 @@ curl -X POST http://localhost:3000/api/student/leaves \
   -H "Authorization: Bearer <your_token>" \
   -H "Content-Type: application/json" \
   -d '{"startDate":"2025-12-01","endDate":"2025-12-05","reason":"Family function"}'
+
+# Delete User (Admin only)
+curl -X DELETE http://localhost:3000/api/admin/users/<user_id> \
+  -H "Authorization: Bearer <admin_token>"
 ```
 
 ### Using JavaScript (Fetch)
@@ -991,6 +1044,18 @@ const getProfile = async (token) => {
   const response = await fetch("http://localhost:3000/api/student/me", {
     headers: { Authorization: `Bearer ${token}` },
   });
+  return await response.json();
+};
+
+// Delete User (Admin only)
+const deleteUser = async (userId, adminToken) => {
+  const response = await fetch(
+    `http://localhost:3000/api/admin/users/${userId}`,
+    {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${adminToken}` },
+    }
+  );
   return await response.json();
 };
 ```
@@ -1203,10 +1268,17 @@ console.log(attendanceData.attendance); // Array of attendance records
 
 ---
 
-**Last Updated**: November 22, 2025  
-**Version**: 1.1.0
+**Last Updated**: November 23, 2025  
+**Version**: 1.2.0
 
 ## 📝 Changelog
+
+### Version 1.2.0 (November 23, 2025)
+
+- ✅ Added delete user functionality for admins
+- ✅ Automatic room occupancy adjustment when deleting users with room assignments
+- ✅ Protection against deleting the last admin user
+- ✅ Cascade deletion of related user data (profile, attendance, leaves, complaints)
 
 ### Version 1.1.0 (November 22, 2025)
 
