@@ -9,13 +9,19 @@ import {
   createComplaint,
   listComplaints,
 } from "../services/complaintService.js";
+import {
+  getStudentProfile,
+  updateStudentProfile,
+} from "../services/profileService.js";
 
 export const getProfile = catchAsync(async (req, res) => {
-  res.json({ message: "Student profile placeholder", user: req.user });
+  const profile = await getStudentProfile(req.user.userId);
+  res.json({ profile });
 });
 
 export const updateProfile = catchAsync(async (req, res) => {
-  res.json({ message: "Update profile placeholder", data: req.body });
+  const profile = await updateStudentProfile(req.user.userId, req.body);
+  res.json({ message: "Profile updated successfully", profile });
 });
 
 export const getAttendance = catchAsync(async (req, res) => {
