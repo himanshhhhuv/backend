@@ -56,7 +56,34 @@ export const sendInAppNotification = async ({ userId, message }) => {
 };
 
 /**
+ * Generate unique transaction ID
+ */
+const generateTransactionId = () => {
+  return "TXN_" + Math.random().toString(36).substr(2, 9).toUpperCase();
+};
+
+/**
+ * Format date in Indian locale
+ */
+const formatDate = () => {
+  return new Date().toLocaleString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+/**
  * Send transaction notification email
+ *
+ * Vercel-Style Modern Email Template
+ * - System fonts (SF Pro, Segoe UI, Roboto)
+ * - Monochromatic base with semantic accents
+ * - 465px container, 1px borders (#eaeaea)
+ * - Minimalist spacing
  */
 export const sendTransactionEmail = async ({
   studentEmail,
@@ -67,105 +94,212 @@ export const sendTransactionEmail = async ({
   balance,
 }) => {
   const isCredit = transactionType === "CREDIT";
+  const transactionId = generateTransactionId();
+  const formattedDate = formatDate();
+
   const subject = isCredit
-    ? `💰 Money Added to Your Account - ₹${amount}`
-    : `💳 Payment Successful - ₹${amount}`;
+    ? `Funds Received - ₹${amount.toFixed(2)}`
+    : `Payment Sent - ₹${amount.toFixed(2)}`;
 
   const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background-color: ${
-          isCredit ? "#4CAF50" : "#2196F3"
-        }; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
-        .content { background-color: #f9f9f9; padding: 30px; border: 1px solid #ddd; }
-        .transaction-details { background-color: white; padding: 20px; margin: 20px 0; border-radius: 5px; border-left: 4px solid ${
-          isCredit ? "#4CAF50" : "#2196F3"
-        }; }
-        .amount { font-size: 32px; font-weight: bold; color: ${
-          isCredit ? "#4CAF50" : "#2196F3"
-        }; margin: 10px 0; }
-        .balance { background-color: #fff3cd; padding: 15px; border-radius: 5px; margin-top: 20px; border-left: 4px solid #ffc107; }
-        .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
-        .label { color: #666; font-size: 14px; margin-bottom: 5px; }
-        .value { font-size: 16px; font-weight: 500; margin-bottom: 15px; }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="header">
-          <h1>${isCredit ? "💰 Money Added" : "💳 Payment Processed"}</h1>
-        </div>
-        <div class="content">
-          <p>Dear ${studentName},</p>
-          <p>${
-            isCredit
-              ? "Money has been successfully added to your hostel account."
-              : "Your payment has been successfully processed."
-          }</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Ubuntu, sans-serif;">
+  
+  <!-- Wrapper -->
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f3f4f6;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        
+        <!-- Email Container -->
+        <table width="465" border="0" cellspacing="0" cellpadding="0" style="max-width: 465px; width: 100%; background-color: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; overflow: hidden;">
           
-          <div class="transaction-details">
-            <div class="label">Transaction Type</div>
-            <div class="value">${
-              isCredit ? "✅ Credit (Money Added)" : "❌ Debit (Money Deducted)"
-            }</div>
-            
-            <div class="label">Amount</div>
-            <div class="amount">${isCredit ? "+" : "-"} ₹${amount.toFixed(
-    2
-  )}</div>
-            
-            <div class="label">Description</div>
-            <div class="value">${description}</div>
-            
-            <div class="label">Date & Time</div>
-            <div class="value">${new Date().toLocaleString("en-IN", {
-              timeZone: "Asia/Kolkata",
-            })}</div>
-          </div>
+          <!-- Header -->
+          <tr>
+            <td style="padding: 20px; border-bottom: 1px solid #eaeaea;">
+              <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td>
+                    <table border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td style="width: 32px; height: 32px; background-color: #000000; border-radius: 8px; text-align: center; vertical-align: middle;">
+                          <span style="color: #ffffff; font-size: 14px; font-weight: bold;">H</span>
+                        </td>
+                        <td style="padding-left: 10px;">
+                          <span style="font-size: 14px; font-weight: 600; color: #000000; letter-spacing: -0.5px;">CDAC Hostel</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                  <td align="right">
+                    <span style="font-size: 12px; color: #666666; font-family: 'SF Mono', Monaco, 'Courier New', monospace;">${transactionId}</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
 
-          <div class="balance">
-            <div class="label">Current Balance</div>
-            <div style="font-size: 24px; font-weight: bold; color: #f57c00;">₹${balance.toFixed(
-              2
-            )}</div>
-          </div>
+          <!-- Main Content -->
+          <tr>
+            <td style="padding: 40px; text-align: center;">
+              
+              <!-- Icon Badge -->
+              <table border="0" cellspacing="0" cellpadding="0" align="center">
+                <tr>
+                  <td style="width: 48px; height: 48px; background-color: #ffffff; border: 1px solid #eaeaea; border-radius: 50%; text-align: center; vertical-align: middle; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                    <span style="font-size: 20px; color: ${
+                      isCredit ? "#16a34a" : "#666666"
+                    };">${isCredit ? "↙" : "↗"}</span>
+                  </td>
+                </tr>
+              </table>
 
-          <p style="margin-top: 30px;">If you have any questions or concerns about this transaction, please contact the hostel administration.</p>
-        </div>
-        <div class="footer">
-          <p>This is an automated email from the Hostel Management System.</p>
-          <p>Please do not reply to this email.</p>
-        </div>
-      </div>
-    </body>
-    </html>
+              <!-- Heading -->
+              <h1 style="margin: 24px 0 8px 0; font-size: 24px; font-weight: 600; color: #000000; letter-spacing: -0.5px;">
+                ${isCredit ? "Funds Received" : "Payment Sent"}
+              </h1>
+              <p style="margin: 0 0 32px 0; font-size: 14px; line-height: 24px; color: #666666;">
+                ${
+                  isCredit
+                    ? `Your account has been credited with ₹${amount.toFixed(
+                        2
+                      )}.`
+                    : `You sent a payment of ₹${amount.toFixed(2)}.`
+                }
+              </p>
+
+              <!-- Transaction Card -->
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #fafafa; border: 1px solid #eaeaea; border-radius: 8px; text-align: left;">
+                
+                <!-- Row 1: Amount -->
+                <tr>
+                  <td style="padding: 16px; border-bottom: 1px solid #eaeaea;">
+                    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td style="font-size: 12px; font-weight: 500; color: #666666; text-transform: uppercase; letter-spacing: 0.5px;">Amount</td>
+                        <td align="right" style="font-size: 16px; font-weight: 500; color: ${
+                          isCredit ? "#16a34a" : "#000000"
+                        }; font-family: 'SF Mono', Monaco, 'Courier New', monospace;">
+                          ${isCredit ? "+" : "-"}₹${amount.toFixed(2)}
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- Row 2: Date -->
+                <tr>
+                  <td style="padding: 16px; border-bottom: 1px solid #eaeaea;">
+                    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td style="font-size: 12px; font-weight: 500; color: #666666; text-transform: uppercase; letter-spacing: 0.5px;">Date</td>
+                        <td align="right" style="font-size: 14px; color: #000000;">${formattedDate}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- Row 3: Description -->
+                <tr>
+                  <td style="padding: 16px;">
+                    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td style="font-size: 12px; font-weight: 500; color: #666666; text-transform: uppercase; letter-spacing: 0.5px; vertical-align: top; padding-top: 2px;">Note</td>
+                        <td align="right" style="font-size: 14px; color: #000000;">${description}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+              </table>
+
+              <!-- Balance Section -->
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-top: 32px; padding-top: 32px; border-top: 1px solid #eaeaea;">
+                <tr>
+                  <td align="center">
+                    <table border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td style="font-size: 12px; font-weight: 500; color: #666666; text-transform: uppercase; letter-spacing: 0.5px; padding-bottom: 8px;">
+                          💳 Current Balance
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="font-size: 32px; font-weight: 700; color: #000000; letter-spacing: -1px;">
+                          ₹${balance.toFixed(2)}
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-top: 32px;">
+                <tr>
+                  <td align="center">
+                    <a href="#" style="display: inline-block; background-color: #000000; color: #ffffff; padding: 12px 24px; border-radius: 6px; font-size: 14px; font-weight: 500; text-decoration: none;">
+                      View Transaction History
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #fafafa; border-top: 1px solid #eaeaea; padding: 20px; text-align: center;">
+              <p style="margin: 0 0 16px 0; font-size: 12px; line-height: 20px; color: #666666;">
+                Questions? Contact <a href="mailto:support@hostel.edu" style="color: #2563eb; text-decoration: underline;">Hostel Support</a>.
+              </p>
+              <p style="margin: 0; font-size: 12px; color: #888888;">
+                Hostel Management System • Automated Notification
+              </p>
+            </td>
+          </tr>
+
+        </table>
+        <!-- End Email Container -->
+
+      </td>
+    </tr>
+  </table>
+  <!-- End Wrapper -->
+
+</body>
+</html>
   `;
 
   const text = `
-Dear ${studentName},
+${isCredit ? "Money Added to Your Account" : "Money Deducted from Your Account"}
+${"=".repeat(40)}
+
+Hi ${studentName},
 
 ${
   isCredit
-    ? "Money has been successfully added to your hostel account."
-    : "Your payment has been successfully processed."
+    ? `Your account has been credited with ₹${amount.toFixed(2)}.`
+    : `You sent a payment of ₹${amount.toFixed(2)}.`
 }
 
-Transaction Details:
-- Type: ${transactionType}
-- Amount: ${isCredit ? "+" : "-"} ₹${amount.toFixed(2)}
-- Description: ${description}
-- Date: ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}
+TRANSACTION DETAILS
+-------------------
+Transaction ID: ${transactionId}
+Amount: ${isCredit ? "+" : "-"}₹${amount.toFixed(2)}
+Date: ${formattedDate}
+Note: ${description}
 
-Current Balance: ₹${balance.toFixed(2)}
-
-If you have any questions, please contact the hostel administration.
+CURRENT BALANCE: ₹${balance.toFixed(2)}
 
 ---
-This is an automated email from the Hostel Management System.
+Questions? Contact Hostel Support.
+Hostel Management System • Automated Notification
   `;
 
   return sendEmail({
