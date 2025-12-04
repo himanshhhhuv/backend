@@ -1,5 +1,6 @@
 import prisma from "../prisma/client.js";
 import ApiError from "../utils/ApiError.js";
+import { sendTransactionEmail } from "./notificationService.js";
 
 export const getStudentTransactions = async (studentId) => {
   const transactions = await prisma.transaction.findMany({
@@ -32,11 +33,21 @@ export const getStudentTransactions = async (studentId) => {
 };
 
 export const addTransaction = async (payload) => {
-  const { studentId, amount, type, description } = payload;
+  const { studentId, amount, type } = payload;
+
+  // Provide default description if not provided
+  const description =
+    payload.description ||
+    (type === "CREDIT"
+      ? "Money added to account"
+      : "Money deducted from account");
 
   // Verify student exists
   const student = await prisma.user.findUnique({
     where: { id: studentId },
+    include: {
+      profile: true,
+    },
   });
 
   if (!student) {
@@ -69,6 +80,24 @@ export const addTransaction = async (payload) => {
       },
     },
   });
+
+  // Calculate updated balance after this transaction
+  const balance = await getStudentBalance(studentId);
+
+  // Send transaction email notification
+  try {
+    await sendTransactionEmail({
+      studentEmail: student.email,
+      studentName: student.profile?.name || "Student",
+      transactionType: type,
+      amount: amount,
+      description: description,
+      balance: balance,
+    });
+  } catch (emailError) {
+    // Log error but don't fail the transaction
+    console.error("Failed to send transaction email:", emailError);
+  }
 
   return transaction;
 };
