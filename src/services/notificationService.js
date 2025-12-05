@@ -309,3 +309,195 @@ Hostel Management System • Automated Notification
     html,
   });
 };
+
+/**
+ * Low Balance Threshold (in Rupees)
+ */
+export const LOW_BALANCE_THRESHOLD = 250;
+
+/**
+ * Send low balance warning email
+ * Triggered when balance falls below threshold after a debit
+ */
+export const sendLowBalanceEmail = async ({
+  studentEmail,
+  studentName,
+  balance,
+}) => {
+  const formattedDate = formatDate();
+
+  const subject = `⚠️ Low Balance Alert - Only ₹${balance.toFixed(
+    2
+  )} remaining`;
+
+  const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Ubuntu, sans-serif;">
+  
+  <!-- Wrapper -->
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f3f4f6;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        
+        <!-- Email Container -->
+        <table width="465" border="0" cellspacing="0" cellpadding="0" style="max-width: 465px; width: 100%; background-color: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; overflow: hidden;">
+          
+          <!-- Header -->
+          <tr>
+            <td style="padding: 20px; border-bottom: 1px solid #eaeaea;">
+              <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td>
+                    <table border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td style="width: 32px; height: 32px; background-color: #000000; border-radius: 8px; text-align: center; vertical-align: middle;">
+                          <span style="color: #ffffff; font-size: 14px; font-weight: bold;">H</span>
+                        </td>
+                        <td style="padding-left: 10px;">
+                          <span style="font-size: 14px; font-weight: 600; color: #000000; letter-spacing: -0.5px;">CDAC Hostel</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                  <td align="right">
+                    <span style="font-size: 12px; color: #dc2626; font-weight: 600;">⚠️ LOW BALANCE</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Main Content -->
+          <tr>
+            <td style="padding: 40px; text-align: center;">
+              
+              <!-- Warning Icon -->
+              <table border="0" cellspacing="0" cellpadding="0" align="center">
+                <tr>
+                  <td style="width: 64px; height: 64px; background-color: #fef2f2; border: 2px solid #fecaca; border-radius: 50%; text-align: center; vertical-align: middle;">
+                    <span style="font-size: 28px;">⚠️</span>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Heading -->
+              <h1 style="margin: 24px 0 8px 0; font-size: 24px; font-weight: 600; color: #dc2626; letter-spacing: -0.5px;">
+                Low Balance Alert
+              </h1>
+              <p style="margin: 0 0 32px 0; font-size: 14px; line-height: 24px; color: #666666;">
+                Hi ${studentName}, your hostel account balance is running low.<br>
+                Please recharge soon to avoid service interruptions.
+              </p>
+
+              <!-- Balance Card -->
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; text-align: center;">
+                <tr>
+                  <td style="padding: 24px;">
+                    <p style="margin: 0 0 8px 0; font-size: 12px; font-weight: 500; color: #991b1b; text-transform: uppercase; letter-spacing: 0.5px;">
+                      Current Balance
+                    </p>
+                    <p style="margin: 0; font-size: 40px; font-weight: 700; color: #dc2626; letter-spacing: -1px;">
+                      ₹${balance.toFixed(2)}
+                    </p>
+                    <p style="margin: 16px 0 0 0; font-size: 12px; color: #991b1b;">
+                      Minimum recommended: ₹${LOW_BALANCE_THRESHOLD}.00
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Info Section -->
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-top: 24px; background-color: #fafafa; border: 1px solid #eaeaea; border-radius: 8px; text-align: left;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600; color: #000000;">
+                      💡 Why recharge now?
+                    </p>
+                    <ul style="margin: 0; padding-left: 20px; font-size: 14px; line-height: 24px; color: #666666;">
+                      <li>Ensure uninterrupted canteen services</li>
+                      <li>Avoid declined transactions</li>
+                      <li>Keep your account active</li>
+                    </ul>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-top: 32px;">
+                <tr>
+                  <td align="center">
+                    <a href="#" style="display: inline-block; background-color: #dc2626; color: #ffffff; padding: 14px 28px; border-radius: 6px; font-size: 14px; font-weight: 600; text-decoration: none;">
+                      Recharge Now
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Timestamp -->
+              <p style="margin: 24px 0 0 0; font-size: 12px; color: #888888;">
+                Alert sent on ${formattedDate}
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #fafafa; border-top: 1px solid #eaeaea; padding: 20px; text-align: center;">
+              <p style="margin: 0 0 16px 0; font-size: 12px; line-height: 20px; color: #666666;">
+                Need help? Contact <a href="mailto:support@hostel.edu" style="color: #2563eb; text-decoration: underline;">Hostel Support</a>.
+              </p>
+              <p style="margin: 0; font-size: 12px; color: #888888;">
+                CDAC Hostel Management System • Automated Alert
+              </p>
+            </td>
+          </tr>
+
+        </table>
+        <!-- End Email Container -->
+
+      </td>
+    </tr>
+  </table>
+  <!-- End Wrapper -->
+
+</body>
+</html>
+  `;
+
+  const text = `
+⚠️ LOW BALANCE ALERT
+${"=".repeat(40)}
+
+Hi ${studentName},
+
+Your hostel account balance is running low. Please recharge soon to avoid service interruptions.
+
+CURRENT BALANCE: ₹${balance.toFixed(2)}
+Minimum recommended: ₹${LOW_BALANCE_THRESHOLD}.00
+
+WHY RECHARGE NOW?
+- Ensure uninterrupted canteen services
+- Avoid declined transactions
+- Keep your account active
+
+Alert sent on ${formattedDate}
+
+---
+Need help? Contact Hostel Support.
+CDAC Hostel Management System • Automated Alert
+  `;
+
+  return sendEmail({
+    to: studentEmail,
+    subject,
+    text,
+    html,
+  });
+};

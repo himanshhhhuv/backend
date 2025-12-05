@@ -1,6 +1,10 @@
 import prisma from "../prisma/client.js";
 import ApiError from "../utils/ApiError.js";
-import { sendTransactionEmail } from "./notificationService.js";
+import {
+  sendTransactionEmail,
+  sendLowBalanceEmail,
+  LOW_BALANCE_THRESHOLD,
+} from "./notificationService.js";
 
 /**
  * Get student's balance from all transactions
@@ -283,11 +287,30 @@ export const addTransaction = async (payload) => {
     console.error("Failed to send transaction email:", emailError);
   }
 
+  // Send low balance warning if balance drops below threshold after DEBIT
+  if (type === "DEBIT" && newBalance < LOW_BALANCE_THRESHOLD) {
+    try {
+      await sendLowBalanceEmail({
+        studentEmail: student.email,
+        studentName: student.profile?.name || "Student",
+        balance: newBalance,
+      });
+      console.log(
+        `⚠️ Low balance alert sent to ${
+          student.email
+        } (Balance: ₹${newBalance.toFixed(2)})`
+      );
+    } catch (emailError) {
+      console.error("Failed to send low balance email:", emailError);
+    }
+  }
+
   // Return transaction with balance info
   return {
     transaction,
     previousBalance: currentBalance,
     newBalance,
+    lowBalanceWarning: type === "DEBIT" && newBalance < LOW_BALANCE_THRESHOLD,
   };
 };
 

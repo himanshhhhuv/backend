@@ -39,16 +39,25 @@ export const getWalletSummary = catchAsync(async (req, res) => {
  */
 export const createTransaction = catchAsync(async (req, res) => {
   const result = await addTransaction(req.body);
+
+  let message =
+    result.transaction.type === "CREDIT"
+      ? `₹${result.transaction.amount} credited successfully`
+      : `₹${result.transaction.amount} debited successfully`;
+
+  // Add low balance warning to message
+  if (result.lowBalanceWarning) {
+    message += ` ⚠️ Low balance alert sent (Balance: ₹${result.newBalance.toFixed(2)})`;
+  }
+
   res.status(201).json({
     success: true,
-    message:
-      result.transaction.type === "CREDIT"
-        ? `₹${result.transaction.amount} credited successfully`
-        : `₹${result.transaction.amount} debited successfully`,
+    message,
     data: {
       transaction: result.transaction,
       previousBalance: result.previousBalance,
       newBalance: result.newBalance,
+      lowBalanceWarning: result.lowBalanceWarning || false,
     },
   });
 });
