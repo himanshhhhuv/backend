@@ -165,6 +165,7 @@ POST /api/auth/logout
 | PUT    | `/api/student/me`         | Update student profile          |
 | GET    | `/api/student/attendance` | Get student attendance records  |
 | GET    | `/api/student/canteen`    | Get canteen transaction summary |
+| GET    | `/api/student/wallet`     | Get wallet summary with stats   |
 | GET    | `/api/student/leaves`     | List leave requests             |
 | POST   | `/api/student/leaves`     | Create leave request            |
 | GET    | `/api/student/complaints` | List student complaints         |
@@ -258,23 +259,57 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "balance": {
-    "studentId": "uuid",
-    "balance": 500
-  },
-  "transactions": [
-    {
-      "id": "uuid",
-      "amount": 150,
-      "type": "DEBIT",
-      "description": "Lunch",
-      "date": "2025-11-21T12:00:00.000Z"
-    }
-  ]
+  "success": true,
+  "data": {
+    "balance": 500,
+    "transactions": [
+      {
+        "id": "uuid",
+        "amount": 150,
+        "type": "DEBIT",
+        "description": "Lunch",
+        "date": "2025-11-21T12:00:00.000Z"
+      }
+    ]
+  }
 }
 ```
 
-#### 5. List Leave Requests
+#### 5. Get Wallet Summary (with Stats)
+
+```http
+GET /api/student/wallet
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "balance": 500,
+    "recentTransactions": [
+      {
+        "id": "uuid",
+        "amount": 150,
+        "type": "DEBIT",
+        "description": "Lunch",
+        "date": "2025-11-21T12:00:00.000Z"
+      }
+    ],
+    "stats": {
+      "totalCredits": 2000,
+      "totalDebits": 1500,
+      "creditCount": 5,
+      "debitCount": 12,
+      "totalTransactions": 17
+    }
+  }
+}
+```
+
+#### 6. List Leave Requests
 
 ```http
 GET /api/student/leaves
@@ -298,7 +333,7 @@ Authorization: Bearer <access_token>
 }
 ```
 
-#### 6. Create Leave Request
+#### 7. Create Leave Request
 
 ```http
 POST /api/student/leaves
@@ -326,7 +361,7 @@ Content-Type: application/json
 }
 ```
 
-#### 7. List Complaints
+#### 8. List Complaints
 
 ```http
 GET /api/student/complaints
@@ -358,7 +393,7 @@ Authorization: Bearer <access_token>
 }
 ```
 
-#### 8. Create Complaint
+#### 9. Create Complaint
 
 ```http
 POST /api/student/complaints
@@ -650,15 +685,18 @@ Content-Type: application/json
 **Auth Required:** ✅ Yes (Role: ADMIN)
 **Headers Required:** `Authorization: Bearer <access_token>`
 
-| Method | Endpoint                          | Description                |
-| ------ | --------------------------------- | -------------------------- |
-| POST   | `/api/admin/users`                | Create new user            |
-| GET    | `/api/admin/users`                | List all users             |
-| DELETE | `/api/admin/users/:id`            | Delete a user              |
-| POST   | `/api/admin/rooms`                | Create new room            |
-| PATCH  | `/api/admin/rooms/:id/assign`     | Assign room to student     |
-| GET    | `/api/admin/reports/summary`      | Get summary report         |
-| POST   | `/api/admin/canteen/transactions` | Create canteen transaction |
+| Method | Endpoint                                | Description                      |
+| ------ | --------------------------------------- | -------------------------------- |
+| POST   | `/api/admin/users`                      | Create new user                  |
+| GET    | `/api/admin/users`                      | List all users                   |
+| DELETE | `/api/admin/users/:id`                  | Delete a user                    |
+| POST   | `/api/admin/rooms`                      | Create new room                  |
+| PATCH  | `/api/admin/rooms/:id/assign`           | Assign room to student           |
+| GET    | `/api/admin/reports/summary`            | Get summary report               |
+| POST   | `/api/admin/canteen/transactions`       | Create canteen transaction       |
+| GET    | `/api/admin/canteen/transactions`       | List all transactions (filtered) |
+| GET    | `/api/admin/canteen/stats`              | Get transaction statistics       |
+| GET    | `/api/admin/canteen/balance/:studentId` | Get specific student's balance   |
 
 #### 1. Create User
 
@@ -883,19 +921,145 @@ Content-Type: application/json
 }
 ```
 
+**Required Fields:** `studentId`, `amount`, `type` (CREDIT or DEBIT)  
+**Optional Fields:** `description` (defaults based on type)
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "₹200.00 credited successfully",
+  "data": {
+    "transaction": {
+      "id": "uuid",
+      "studentId": "student_uuid",
+      "amount": 200,
+      "type": "CREDIT",
+      "description": "Monthly allowance",
+      "date": "2025-11-21T10:00:00.000Z",
+      "student": {
+        "id": "student_uuid",
+        "email": "student@example.com",
+        "profile": {
+          "name": "John Doe",
+          "rollNo": "S12345"
+        }
+      }
+    },
+    "previousBalance": 500,
+    "newBalance": 700
+  }
+}
+```
+
+**Error Response (Insufficient Balance for DEBIT):**
+
+```json
+{
+  "success": false,
+  "message": "Insufficient balance. Current balance: ₹100.00, Required: ₹200.00"
+}
+```
+
+#### 7. List All Transactions (Admin)
+
+```http
+GET /api/admin/canteen/transactions
+Authorization: Bearer <access_token>
+```
+
+**Query Parameters:**
+
+- `studentId` (optional): Filter by student ID
+- `type` (optional): Filter by type (CREDIT or DEBIT)
+- `startDate` (optional): Filter from date (ISO format)
+- `endDate` (optional): Filter to date (ISO format)
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Items per page (default: 20)
+
 **Response:**
 
 ```json
 {
   "success": true,
   "data": {
-    "id": "uuid",
+    "transactions": [
+      {
+        "id": "uuid",
+        "studentId": "student_uuid",
+        "amount": 200,
+        "type": "CREDIT",
+        "description": "Monthly allowance",
+        "date": "2025-11-21T10:00:00.000Z",
+        "student": {
+          "id": "student_uuid",
+          "email": "student@example.com",
+          "profile": {
+            "name": "John Doe",
+            "rollNo": "S12345",
+            "course": "Computer Science"
+          }
+        }
+      }
+    ],
+    "pagination": {
+      "total": 150,
+      "page": 1,
+      "limit": 20,
+      "totalPages": 8
+    }
+  }
+}
+```
+
+#### 8. Get Transaction Statistics (Admin)
+
+```http
+GET /api/admin/canteen/stats
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "allTime": {
+      "totalCredits": 50000,
+      "totalDebits": 35000,
+      "netBalance": 15000
+    },
+    "today": {
+      "credits": 2000,
+      "debits": 500
+    },
+    "thisMonth": {
+      "credits": 15000,
+      "debits": 8000
+    },
+    "transactionCount": 450
+  }
+}
+```
+
+#### 9. Get Student Balance (Admin)
+
+```http
+GET /api/admin/canteen/balance/:studentId
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
     "studentId": "student_uuid",
-    "amount": 200,
-    "type": "CREDIT",
-    "description": "Monthly allowance",
     "balance": 700,
-    "createdAt": "2025-11-21T10:00:00.000Z"
+    "transactionCount": 25
   }
 }
 ```
