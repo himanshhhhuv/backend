@@ -23,7 +23,7 @@ const register = z.object({
       .or(z.string().transform((val) => parseInt(val))),
     parentPhone: z.string().min(10).optional(),
     address: z.string().optional(),
-    role: z.enum(["STUDENT", "WARDEN", "ADMIN"]).optional(),
+    role: z.enum(["STUDENT", "WARDEN", "ADMIN", "CANTEEN_MANAGER"]).optional(),
   }),
 });
 
