@@ -47,7 +47,9 @@ export const createTransaction = catchAsync(async (req, res) => {
 
   // Add low balance warning to message
   if (result.lowBalanceWarning) {
-    message += ` ⚠️ Low balance alert sent (Balance: ₹${result.newBalance.toFixed(2)})`;
+    message += ` ⚠️ Low balance alert sent (Balance: ₹${result.newBalance.toFixed(
+      2
+    )})`;
   }
 
   res.status(201).json({

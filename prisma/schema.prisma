@@ -8,19 +8,21 @@ datasource db {
 }
 
 model User {
-  id           String        @id @default(cuid())
-  email        String        @unique
-  password     String?
-  role         Role          @default(STUDENT)
-  profile      Profile?
-  room         Room?         @relation(fields: [roomId], references: [id], onDelete: SetNull)
-  roomId       String?
-  attendance   Attendance[]
-  leaves       Leave[]
-  approvedLeaves Leave[]     @relation("ApprovedBy")
-  complaints   Complaint[]
-  transactions Transaction[]
-  createdAt    DateTime      @default(now())
+  id             String        @id @default(cuid())
+  email          String        @unique
+  password       String?
+  role           Role          @default(STUDENT)
+  profile        Profile?
+  room           Room?         @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  roomId         String?
+  attendance     Attendance[]
+  leaves         Leave[]
+  approvedLeaves Leave[]       @relation("ApprovedBy")
+  complaints     Complaint[]
+  transactions   Transaction[]
+  foodOrders     FoodOrder[]   @relation("StudentOrders")
+  servedOrders   FoodOrder[]   @relation("ServedBy")
+  createdAt      DateTime      @default(now())
 }
 
 model Profile {
@@ -77,6 +79,48 @@ model Transaction {
   type        TransactionType
   description String
   date        DateTime         @default(now())
+  foodOrder   FoodOrder?
+}
+
+// ==================== CANTEEN MENU & ORDERS ====================
+
+model MenuItem {
+  id          String       @id @default(cuid())
+  name        String
+  category    MenuCategory
+  price       Float
+  unit        String       @default("piece") // piece, plate, glass, bowl, etc.
+  isAvailable Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  orderItems  OrderItem[]
+}
+
+model FoodOrder {
+  id            String      @id @default(cuid())
+  orderNumber   String      @unique
+  student       User        @relation("StudentOrders", fields: [studentId], references: [id], onDelete: Cascade)
+  studentId     String
+  items         OrderItem[]
+  totalAmount   Float
+  mealType      MealType
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+  transactionId String      @unique
+  servedBy      User?       @relation("ServedBy", fields: [servedById], references: [id], onDelete: SetNull)
+  servedById    String?
+  createdAt     DateTime    @default(now())
+}
+
+model OrderItem {
+  id         String   @id @default(cuid())
+  order      FoodOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId    String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+  menuItemId String
+  itemName   String   // Store name at time of order
+  quantity   Int
+  unitPrice  Float    // Price at time of order
+  subtotal   Float
 }
 
 model Complaint {
@@ -94,6 +138,7 @@ enum Role {
   STUDENT
   WARDEN
   ADMIN
+  CANTEEN_MANAGER
 }
 
 enum AttendanceStatus {
@@ -117,4 +162,22 @@ enum ComplaintStatus {
   PENDING
   IN_PROGRESS
   RESOLVED
+}
+
+enum MenuCategory {
+  BREAKFAST
+  LUNCH
+  DINNER
+  SNACKS
+  FRUITS
+  BEVERAGES
+  EXTRAS
+}
+
+enum MealType {
+  BREAKFAST
+  LUNCH
+  EVENING_SNACKS
+  DINNER
+  OTHER
 }
