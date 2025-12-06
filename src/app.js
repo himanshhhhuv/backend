@@ -9,24 +9,72 @@ import wardenRoutes from "./routes/wardenRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import canteenRoutes from "./routes/canteenRoutes.js";
 import errorHandler from "./middleware/errorHandler.js";
+import {
+  helmetMiddleware,
+  apiLimiter,
+  authLimiter,
+  transactionLimiter,
+  getCorsOptions,
+} from "./middleware/security.js";
 
 const app = express();
 
-app.use(cors({ origin: true, credentials: true }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// =========================
+// SECURITY MIDDLEWARE
+// =========================
+
+// Helmet - Security headers (XSS, clickjacking, MIME sniffing protection)
+app.use(helmetMiddleware);
+
+// CORS - Configured for specific origins (not wide open)
+app.use(cors(getCorsOptions()));
+
+// General rate limiting for all API routes
+app.use("/api", apiLimiter);
+
+// =========================
+// BODY PARSERS & UTILITIES
+// =========================
+
+app.use(express.json({ limit: "10kb" })); // Limit body size to prevent DoS
+app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 app.use(cookieParser());
-app.use(morgan("dev"));
+
+// Logging (only in development)
+if (process.env.NODE_ENV !== "production") {
+  app.use(morgan("dev"));
+}
+
+// =========================
+// HEALTH CHECK
+// =========================
 
 app.get("/health", (req, res) => {
-  res.json({ status: "ok" });
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-app.use("/api/auth", authRoutes);
+// =========================
+// API ROUTES
+// =========================
+
+// Auth routes with stricter rate limiting (prevent brute-force)
+app.use("/api/auth", authLimiter, authRoutes);
+
+// Student routes
 app.use("/api/student", studentRoutes);
+
+// Warden routes
 app.use("/api/warden", wardenRoutes);
+
+// Admin routes
 app.use("/api/admin", adminRoutes);
-app.use("/api/canteen", canteenRoutes);
+
+// Canteen routes with transaction rate limiting
+app.use("/api/canteen", transactionLimiter, canteenRoutes);
+
+// =========================
+// ERROR HANDLING
+// =========================
 
 app.use(errorHandler);
 
