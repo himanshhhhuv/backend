@@ -54,7 +54,7 @@ export const createUser = catchAsync(async (req, res) => {
   }
 
   // Validate role
-  const validRoles = ["STUDENT", "WARDEN", "ADMIN"];
+  const validRoles = ["STUDENT", "WARDEN", "ADMIN", "CANTEEN_MANAGER"];
   const userRole = role || "STUDENT";
   if (!validRoles.includes(userRole)) {
     throw new ApiError(400, "Invalid role");
