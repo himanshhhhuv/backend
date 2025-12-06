@@ -20,4 +20,6 @@ export const env = {
   },
   // CORS allowed origins (comma-separated in production)
   corsOrigins: process.env.CORS_ORIGINS || "",
+  // Frontend URL for password reset links
+  frontendUrl: process.env.FRONTEND_URL || "http://localhost:5173",
 };

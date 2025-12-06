@@ -5,7 +5,10 @@ import {
   signAccessToken,
   signRefreshToken,
   verifyRefreshToken,
+  signPasswordResetToken,
+  verifyPasswordResetToken,
 } from "../utils/generateToken.js";
+import { sendPasswordResetEmail } from "./notificationService.js";
 
 /**
  * Register a new user with profile
@@ -248,4 +251,106 @@ export const refreshAuthToken = async (token) => {
   } catch (error) {
     throw new ApiError(401, "Invalid refresh token");
   }
+};
+
+/**
+ * Request password reset - sends email with reset link
+ * @param {string} email - User's email address
+ * @returns {Object} - Success message (always returns success to prevent email enumeration)
+ */
+export const forgotPassword = async (email) => {
+  // Find user by email
+  const user = await prisma.user.findUnique({
+    where: { email },
+    include: {
+      profile: {
+        select: { name: true },
+      },
+    },
+  });
+
+  // Always return success to prevent email enumeration attacks
+  // But only send email if user exists
+  if (user) {
+    // Generate reset token
+    const resetToken = signPasswordResetToken(user.id);
+
+    // Build reset URL (frontend should handle this route)
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
+
+    // Send password reset email
+    try {
+      await sendPasswordResetEmail({
+        email: user.email,
+        name: user.profile?.name || "User",
+        resetUrl,
+        expiresIn: "15 minutes",
+      });
+      console.log(`📧 Password reset email sent to ${email}`);
+    } catch (emailError) {
+      console.error("Failed to send password reset email:", emailError);
+      // Don't throw - we don't want to reveal if email exists
+    }
+  } else {
+    console.log(`⚠️ Password reset requested for non-existent email: ${email}`);
+  }
+
+  // Always return success message
+  return {
+    message:
+      "If an account with that email exists, a password reset link has been sent.",
+  };
+};
+
+/**
+ * Reset password using reset token
+ * @param {string} token - Password reset token
+ * @param {string} newPassword - New password to set
+ * @returns {Object} - Success message
+ */
+export const resetPassword = async (token, newPassword) => {
+  // Verify reset token
+  let decoded;
+  try {
+    decoded = verifyPasswordResetToken(token);
+  } catch (error) {
+    if (error.name === "TokenExpiredError") {
+      throw new ApiError(
+        400,
+        "Password reset link has expired. Please request a new one."
+      );
+    }
+    throw new ApiError(400, "Invalid password reset link");
+  }
+
+  // Find user
+  const user = await prisma.user.findUnique({
+    where: { id: decoded.userId },
+  });
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  // Validate password strength
+  if (!newPassword || newPassword.length < 6) {
+    throw new ApiError(400, "Password must be at least 6 characters long");
+  }
+
+  // Hash new password
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+  // Update password
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { password: hashedPassword },
+  });
+
+  console.log(`✅ Password reset successful for user: ${user.email}`);
+
+  return {
+    message:
+      "Password has been reset successfully. You can now login with your new password.",
+  };
 };

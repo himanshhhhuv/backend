@@ -319,6 +319,174 @@ export const LOW_BALANCE_THRESHOLD = 250;
  * Send low balance warning email
  * Triggered when balance falls below threshold after a debit
  */
+/**
+ * Send password reset email
+ * Contains a secure link to reset the user's password
+ */
+export const sendPasswordResetEmail = async ({
+  email,
+  name,
+  resetUrl,
+  expiresIn,
+}) => {
+  const subject = "Reset Your Password - CDAC Hostel";
+
+  const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reset Your Password</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Ubuntu, sans-serif;">
+  
+  <!-- Wrapper -->
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f3f4f6;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        
+        <!-- Email Container -->
+        <table width="465" border="0" cellspacing="0" cellpadding="0" style="max-width: 465px; width: 100%; background-color: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; overflow: hidden;">
+          
+          <!-- Header -->
+          <tr>
+            <td style="padding: 20px; border-bottom: 1px solid #eaeaea;">
+              <table border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td style="width: 32px; height: 32px; background-color: #000000; border-radius: 8px; text-align: center; vertical-align: middle;">
+                    <span style="color: #ffffff; font-size: 14px; font-weight: bold;">H</span>
+                  </td>
+                  <td style="padding-left: 10px;">
+                    <span style="font-size: 14px; font-weight: 600; color: #000000; letter-spacing: -0.5px;">CDAC Hostel</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Main Content -->
+          <tr>
+            <td style="padding: 40px; text-align: center;">
+              
+              <!-- Lock Icon -->
+              <table border="0" cellspacing="0" cellpadding="0" align="center">
+                <tr>
+                  <td style="width: 64px; height: 64px; background-color: #f3f4f6; border: 1px solid #eaeaea; border-radius: 50%; text-align: center; vertical-align: middle;">
+                    <span style="font-size: 28px;">🔐</span>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Heading -->
+              <h1 style="margin: 24px 0 8px 0; font-size: 24px; font-weight: 600; color: #000000; letter-spacing: -0.5px;">
+                Reset Your Password
+              </h1>
+              <p style="margin: 0 0 32px 0; font-size: 14px; line-height: 24px; color: #666666;">
+                Hi ${name}, we received a request to reset your password.<br>
+                Click the button below to create a new password.
+              </p>
+
+              <!-- CTA Button -->
+              <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td align="center">
+                    <a href="${resetUrl}" style="display: inline-block; background-color: #000000; color: #ffffff; padding: 14px 32px; border-radius: 6px; font-size: 14px; font-weight: 600; text-decoration: none;">
+                      Reset Password
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Expiry Notice -->
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-top: 32px; background-color: #fafafa; border: 1px solid #eaeaea; border-radius: 8px;">
+                <tr>
+                  <td style="padding: 16px; text-align: center;">
+                    <p style="margin: 0; font-size: 13px; color: #666666;">
+                      ⏰ This link expires in <strong style="color: #000000;">${expiresIn}</strong>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Link Fallback -->
+              <p style="margin: 24px 0 0 0; font-size: 12px; color: #888888;">
+                If the button doesn't work, copy and paste this link into your browser:
+              </p>
+              <p style="margin: 8px 0 0 0; font-size: 12px; color: #2563eb; word-break: break-all;">
+                <a href="${resetUrl}" style="color: #2563eb;">${resetUrl}</a>
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- Security Notice -->
+          <tr>
+            <td style="padding: 0 40px 40px 40px;">
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #fffbeb; border: 1px solid #fef3c7; border-radius: 8px;">
+                <tr>
+                  <td style="padding: 16px;">
+                    <p style="margin: 0; font-size: 13px; color: #92400e; line-height: 20px;">
+                      <strong>⚠️ Didn't request this?</strong><br>
+                      If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #fafafa; border-top: 1px solid #eaeaea; padding: 20px; text-align: center;">
+              <p style="margin: 0 0 16px 0; font-size: 12px; line-height: 20px; color: #666666;">
+                Need help? Contact <a href="mailto:support@hostel.edu" style="color: #2563eb; text-decoration: underline;">Hostel Support</a>.
+              </p>
+              <p style="margin: 0; font-size: 12px; color: #888888;">
+                CDAC Hostel Management System • Security Email
+              </p>
+            </td>
+          </tr>
+
+        </table>
+        <!-- End Email Container -->
+
+      </td>
+    </tr>
+  </table>
+  <!-- End Wrapper -->
+
+</body>
+</html>
+  `;
+
+  const text = `
+RESET YOUR PASSWORD
+${"=".repeat(40)}
+
+Hi ${name},
+
+We received a request to reset your password. Click the link below to create a new password:
+
+${resetUrl}
+
+⏰ This link expires in ${expiresIn}.
+
+If you didn't request this, you can safely ignore this email. Your password will remain unchanged.
+
+---
+Need help? Contact Hostel Support.
+CDAC Hostel Management System • Security Email
+  `;
+
+  return sendEmail({
+    to: email,
+    subject,
+    text,
+    html,
+  });
+};
+
 export const sendLowBalanceEmail = async ({
   studentEmail,
   studentName,

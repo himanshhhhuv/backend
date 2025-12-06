@@ -139,7 +139,7 @@ export const listUsers = catchAsync(async (req, res) => {
   // Build where clause for filtering
   const where = {};
   if (role) {
-    const validRoles = ["STUDENT", "WARDEN", "ADMIN"];
+    const validRoles = ["STUDENT", "WARDEN", "ADMIN", "CANTEEN_MANAGER"];
     if (!validRoles.includes(role)) {
       throw new ApiError(400, "Invalid role filter");
     }

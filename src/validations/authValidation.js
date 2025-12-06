@@ -33,8 +33,30 @@ const refresh = z.object({
   }),
 });
 
+const forgotPassword = z.object({
+  body: z.object({
+    email: z
+      .string({ error: "Email is required" })
+      .email({ error: "Please provide a valid email address" }),
+  }),
+});
+
+const resetPassword = z.object({
+  body: z.object({
+    token: z
+      .string({ error: "Reset token is required" })
+      .min(1, { error: "Reset token is required" }),
+    password: z
+      .string({ error: "Password is required" })
+      .min(6, { error: "Password must be at least 6 characters long" })
+      .max(128, { error: "Password is too long" }),
+  }),
+});
+
 export const authSchemas = {
   login: credentials,
   register,
   refresh,
+  forgotPassword,
+  resetPassword,
 };
