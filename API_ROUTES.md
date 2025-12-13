@@ -2,7 +2,7 @@
 
 Base URL: `http://localhost:5000` (adjust port as needed)
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Authentication Routes](#authentication-routes)
 - [Student Routes](#student-routes)
@@ -13,7 +13,7 @@ Base URL: `http://localhost:5000` (adjust port as needed)
 
 ---
 
-## 🎭 User Roles
+## User Roles
 
 | Role              | Description           | Access                                                        |
 | ----------------- | --------------------- | ------------------------------------------------------------- |
@@ -24,20 +24,24 @@ Base URL: `http://localhost:5000` (adjust port as needed)
 
 ---
 
-## 🔐 Authentication
-
-### Authentication Routes
+## Authentication Routes
 
 **Base Path:** `/api/auth`
 
-| Method | Endpoint                  | Auth Required | Description          |
-| ------ | ------------------------- | ------------- | -------------------- |
-| POST   | `/api/auth/register`      | ❌ No         | Register a new user  |
-| POST   | `/api/auth/login`         | ❌ No         | Login user           |
-| POST   | `/api/auth/refresh-token` | ❌ No         | Refresh access token |
-| POST   | `/api/auth/logout`        | ❌ No         | Logout user          |
+| Method | Endpoint                        | Auth Required | Description                  |
+| ------ | ------------------------------- | ------------- | ---------------------------- |
+| POST   | `/api/auth/register`            | No            | Register a new user          |
+| POST   | `/api/auth/login`               | No            | Login user                   |
+| POST   | `/api/auth/refresh-token`       | No            | Refresh access token         |
+| POST   | `/api/auth/logout`              | No            | Logout user                  |
+| GET    | `/api/auth/verify-email`        | No            | Verify email address         |
+| POST   | `/api/auth/resend-verification` | No            | Resend verification email    |
+| POST   | `/api/auth/forgot-password`     | No            | Request password reset email |
+| POST   | `/api/auth/reset-password`      | No            | Reset password with token    |
 
-#### 1. Register User
+---
+
+### 1. Register User
 
 ```http
 POST /api/auth/register
@@ -59,37 +63,110 @@ Content-Type: application/json
 
 **Required Fields:** `email`, `password`, `name`, `rollNo`, `phone`, `course`, `year`  
 **Optional Fields:** `role` (defaults to STUDENT), `parentPhone`, `address`  
-**Valid Roles:** `STUDENT`, `WARDEN`, `ADMIN`, `CANTEEN_MANAGER`
+**Valid Roles:** `STUDENT`
 
-**Response:**
+> Note: Only STUDENT role can be self-registered. Other roles must be created by ADMIN.
+
+**Response (201 Created):**
 
 ```json
 {
-  "user": {
-    "id": "uuid",
-    "email": "student@example.com",
-    "role": "STUDENT",
-    "createdAt": "2025-11-22T10:00:00.000Z",
-    "profile": {
-      "id": "profile_uuid",
-      "name": "John Doe",
-      "rollNo": "S12345",
-      "phone": "1234567890",
-      "parentPhone": "9876543210",
-      "photo": null,
-      "course": "Computer Science",
-      "year": 2,
-      "address": "123 Main St, City"
-    }
-  },
-  "tokens": {
-    "accessToken": "jwt_token",
-    "refreshToken": "refresh_token"
+  "message": "User registered",
+  "data": {
+    "user": {
+      "id": "uuid",
+      "email": "student@example.com",
+      "role": "STUDENT",
+      "createdAt": "2025-12-13T10:00:00.000Z",
+      "profile": {
+        "id": "profile_uuid",
+        "name": "John Doe",
+        "rollNo": "S12345",
+        "phone": "1234567890",
+        "parentPhone": "9876543210",
+        "photo": null,
+        "course": "Computer Science",
+        "year": 2,
+        "address": "123 Main St, City"
+      }
+    },
+    "message": "Registration successful! Please check your email to verify your account."
   }
 }
 ```
 
-#### 2. Login
+> Important: A verification email is sent automatically. User must verify email before logging in.
+
+---
+
+### 2. Verify Email
+
+Called when user clicks the verification link in their email.
+
+```http
+GET /api/auth/verify-email?token=<verification_token>
+```
+
+**Query Parameters:**
+
+| Parameter | Required | Description                       |
+| --------- | -------- | --------------------------------- |
+| `token`   | Yes      | JWT verification token from email |
+
+**Response (200 OK):**
+
+```json
+{
+  "success": true,
+  "message": "Email verified successfully! You can now login to your account."
+}
+```
+
+**Error Responses:**
+
+```json
+// Token expired (400)
+{
+  "success": false,
+  "message": "Verification link has expired. Please request a new one."
+}
+
+// Invalid token (400)
+{
+  "success": false,
+  "message": "Invalid verification link"
+}
+```
+
+---
+
+### 3. Resend Verification Email
+
+Request a new verification email if the previous one expired or wasn't received.
+
+```http
+POST /api/auth/resend-verification
+Content-Type: application/json
+
+{
+  "email": "student@example.com"
+}
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "success": true,
+  "message": "If an account with that email exists and is not verified, a verification link has been sent."
+}
+```
+
+> Note: Response is always the same to prevent email enumeration attacks.
+
+---
+
+### 4. Login
 
 ```http
 POST /api/auth/login
@@ -101,7 +178,7 @@ Content-Type: application/json
 }
 ```
 
-**Response:**
+**Response (200 OK):**
 
 ```json
 {
@@ -109,8 +186,9 @@ Content-Type: application/json
     "id": "uuid",
     "email": "student@example.com",
     "role": "STUDENT",
+    "isEmailVerified": true,
     "roomId": null,
-    "createdAt": "2025-11-22T10:00:00.000Z",
+    "createdAt": "2025-12-13T10:00:00.000Z",
     "profile": {
       "id": "profile_uuid",
       "name": "John Doe",
@@ -130,7 +208,18 @@ Content-Type: application/json
 }
 ```
 
-#### 3. Refresh Token
+**Error Response (403 - Email Not Verified):**
+
+```json
+{
+  "success": false,
+  "message": "Please verify your email before logging in. Check your inbox for the verification link."
+}
+```
+
+---
+
+### 5. Refresh Token
 
 ```http
 POST /api/auth/refresh-token
@@ -141,7 +230,7 @@ Content-Type: application/json
 }
 ```
 
-**Response:**
+**Response (200 OK):**
 
 ```json
 {
@@ -150,26 +239,95 @@ Content-Type: application/json
 }
 ```
 
-#### 4. Logout
+---
+
+### 6. Logout
 
 ```http
 POST /api/auth/logout
 ```
 
-**Response:**
+**Response (200 OK):**
 
 ```json
 {
-  "message": "Logged out successfully"
+  "message": "Logged out"
 }
 ```
 
 ---
 
-## 👨‍🎓 Student Routes
+### 7. Forgot Password
+
+Request a password reset email.
+
+```http
+POST /api/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "student@example.com"
+}
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "success": true,
+  "message": "If an account with that email exists, a password reset link has been sent."
+}
+```
+
+> Note: Response is always the same to prevent email enumeration attacks.
+
+---
+
+### 8. Reset Password
+
+Reset password using the token from the email.
+
+```http
+POST /api/auth/reset-password
+Content-Type: application/json
+
+{
+  "token": "reset_token_from_email",
+  "password": "NewPassword123!"
+}
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "success": true,
+  "message": "Password has been reset successfully. You can now login with your new password."
+}
+```
+
+**Error Responses:**
+
+```json
+// Token expired (400)
+{
+  "success": false,
+  "message": "Password reset link has expired. Please request a new one."
+}
+
+// Invalid token (400)
+{
+  "success": false,
+  "message": "Invalid password reset link"
+}
+```
+
+---
+
+## Student Routes
 
 **Base Path:** `/api/student`  
-**Auth Required:** ✅ Yes (Role: STUDENT)  
+**Auth Required:** Yes (Role: STUDENT)  
 **Headers Required:** `Authorization: Bearer <access_token>`
 
 | Method | Endpoint                  | Description                     |
@@ -184,14 +342,14 @@ POST /api/auth/logout
 | GET    | `/api/student/complaints` | List student complaints         |
 | POST   | `/api/student/complaints` | Create complaint                |
 
-#### 1. Get Profile
+### 1. Get Profile
 
 ```http
 GET /api/student/me
 Authorization: Bearer <access_token>
 ```
 
-#### 2. Update Profile
+### 2. Update Profile
 
 ```http
 PUT /api/student/me
@@ -206,14 +364,14 @@ Content-Type: application/json
 }
 ```
 
-#### 3. Get Attendance
+### 3. Get Attendance
 
 ```http
 GET /api/student/attendance
 Authorization: Bearer <access_token>
 ```
 
-#### 4. Get Canteen Summary
+### 4. Get Canteen Summary
 
 ```http
 GET /api/student/canteen
@@ -240,7 +398,7 @@ Authorization: Bearer <access_token>
 }
 ```
 
-#### 5. Get Wallet Summary (with Stats)
+### 5. Get Wallet Summary (with Stats)
 
 ```http
 GET /api/student/wallet
@@ -266,16 +424,39 @@ Authorization: Bearer <access_token>
 }
 ```
 
-#### 6-9. Leaves & Complaints
+### 6. Create Leave Request
 
-See standard leave and complaint endpoints.
+```http
+POST /api/student/leaves
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "fromDate": "2025-12-15",
+  "toDate": "2025-12-17",
+  "reason": "Family function"
+}
+```
+
+### 7. Create Complaint
+
+```http
+POST /api/student/complaints
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "title": "Water leakage in room",
+  "description": "There is water leaking from the bathroom ceiling"
+}
+```
 
 ---
 
-## 👮 Warden Routes
+## Warden Routes
 
 **Base Path:** `/api/warden`  
-**Auth Required:** ✅ Yes (Role: WARDEN or ADMIN)  
+**Auth Required:** Yes (Role: WARDEN or ADMIN)  
 **Headers Required:** `Authorization: Bearer <access_token>`
 
 | Method | Endpoint                            | Description                         |
@@ -288,12 +469,63 @@ See standard leave and complaint endpoints.
 | GET    | `/api/warden/complaints`            | List all complaints                 |
 | PATCH  | `/api/warden/complaints/:id`        | Update complaint status             |
 
+### 1. Get Pending Leaves
+
+```http
+GET /api/warden/leaves/pending
+Authorization: Bearer <access_token>
+```
+
+### 2. Approve Leave
+
+```http
+PATCH /api/warden/leaves/:id/approve
+Authorization: Bearer <access_token>
+```
+
+### 3. Reject Leave
+
+```http
+PATCH /api/warden/leaves/:id/reject
+Authorization: Bearer <access_token>
+```
+
+### 4. Mark Attendance
+
+```http
+POST /api/warden/attendance/mark
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "studentId": "student_uuid",
+  "date": "2025-12-13",
+  "status": "PRESENT",
+  "inTime": "2025-12-13T08:00:00.000Z",
+  "outTime": "2025-12-13T22:00:00.000Z"
+}
+```
+
+### 5. Update Complaint Status
+
+```http
+PATCH /api/warden/complaints/:id
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "status": "IN_PROGRESS"
+}
+```
+
+**Valid Statuses:** `PENDING`, `IN_PROGRESS`, `RESOLVED`
+
 ---
 
-## 👔 Admin Routes
+## Admin Routes
 
 **Base Path:** `/api/admin`  
-**Auth Required:** ✅ Yes (Role: ADMIN)  
+**Auth Required:** Yes (Role: ADMIN)  
 **Headers Required:** `Authorization: Bearer <access_token>`
 
 | Method | Endpoint                                | Description                      |
@@ -309,7 +541,7 @@ See standard leave and complaint endpoints.
 | GET    | `/api/admin/canteen/stats`              | Get transaction statistics       |
 | GET    | `/api/admin/canteen/balance/:studentId` | Get specific student's balance   |
 
-#### 1. Create User (Any Role)
+### 1. Create User (Any Role)
 
 ```http
 POST /api/admin/users
@@ -330,7 +562,9 @@ Content-Type: application/json
 
 **Valid Roles:** `STUDENT`, `WARDEN`, `ADMIN`, `CANTEEN_MANAGER`
 
-#### 2. List Users
+> Note: Users created by admin have `isEmailVerified: true` by default.
+
+### 2. List Users
 
 ```http
 GET /api/admin/users?role=CANTEEN_MANAGER&page=1&limit=10
@@ -339,11 +573,46 @@ Authorization: Bearer <access_token>
 
 **Query Parameters:**
 
-- `role` (optional): Filter by role (`STUDENT`, `WARDEN`, `ADMIN`, `CANTEEN_MANAGER`)
-- `page` (optional): Page number (default: 1)
-- `limit` (optional): Items per page (default: 10)
+| Parameter | Required | Description                                              |
+| --------- | -------- | -------------------------------------------------------- |
+| `role`    | No       | Filter by role (STUDENT, WARDEN, ADMIN, CANTEEN_MANAGER) |
+| `page`    | No       | Page number (default: 1)                                 |
+| `limit`   | No       | Items per page (default: 10)                             |
 
-#### 3. Create Canteen Transaction (Add/Deduct Money)
+### 3. Delete User
+
+```http
+DELETE /api/admin/users/:id
+Authorization: Bearer <access_token>
+```
+
+### 4. Create Room
+
+```http
+POST /api/admin/rooms
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "roomNo": "A101",
+  "floor": 1,
+  "capacity": 4
+}
+```
+
+### 5. Assign Room to Student
+
+```http
+PATCH /api/admin/rooms/:id/assign
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "studentId": "student_uuid"
+}
+```
+
+### 6. Create Canteen Transaction (Add/Deduct Money)
 
 ```http
 POST /api/admin/canteen/transactions
@@ -375,10 +644,10 @@ Content-Type: application/json
 
 ---
 
-## 🍽️ Canteen Routes (NEW)
+## Canteen Routes
 
 **Base Path:** `/api/canteen`  
-**Auth Required:** ✅ Yes  
+**Auth Required:** Yes  
 **Headers Required:** `Authorization: Bearer <access_token>`
 
 ### Overview
@@ -391,28 +660,29 @@ The canteen system allows:
 
 ### Menu Endpoints
 
-| Method | Endpoint                       | Role Required     | Description                   |
-| ------ | ------------------------------ | ----------------- | ----------------------------- |
-| GET    | `/api/canteen/menu`            | Any authenticated | View available menu items     |
-| GET    | `/api/canteen/menu/all`        | ADMIN             | All items (incl. unavailable) |
-| POST   | `/api/canteen/menu`            | ADMIN             | Create menu item              |
-| POST   | `/api/canteen/menu/bulk`       | ADMIN             | Bulk create items             |
-| PATCH  | `/api/canteen/menu/prices`     | ADMIN             | Bulk update prices            |
-| PATCH  | `/api/canteen/menu/:id`        | ADMIN             | Update item                   |
-| PATCH  | `/api/canteen/menu/:id/toggle` | ADMIN             | Toggle availability           |
-| DELETE | `/api/canteen/menu/:id`        | ADMIN             | Delete item                   |
+| Method | Endpoint                       | Role Required          | Description                   |
+| ------ | ------------------------------ | ---------------------- | ----------------------------- |
+| GET    | `/api/canteen/menu`            | Any authenticated      | View available menu items     |
+| GET    | `/api/canteen/menu/all`        | ADMIN                  | All items (incl. unavailable) |
+| GET    | `/api/canteen/menu/:id`        | ADMIN, CANTEEN_MANAGER | Get single menu item          |
+| POST   | `/api/canteen/menu`            | ADMIN                  | Create menu item              |
+| POST   | `/api/canteen/menu/bulk`       | ADMIN                  | Bulk create items             |
+| PATCH  | `/api/canteen/menu/prices`     | ADMIN                  | Bulk update prices            |
+| PATCH  | `/api/canteen/menu/:id`        | ADMIN                  | Update item                   |
+| PATCH  | `/api/canteen/menu/:id/toggle` | ADMIN                  | Toggle availability           |
+| DELETE | `/api/canteen/menu/:id`        | ADMIN                  | Delete item                   |
 
 ### Order/Billing Endpoints
 
-| Method | Endpoint                          | Role Required          | Description                 |
-| ------ | --------------------------------- | ---------------------- | --------------------------- |
-| POST   | `/api/canteen/orders`             | CANTEEN_MANAGER, ADMIN | Create order by student ID  |
-| POST   | `/api/canteen/orders/quick`       | CANTEEN_MANAGER, ADMIN | Create order by roll number |
-| GET    | `/api/canteen/orders`             | CANTEEN_MANAGER, ADMIN | List all orders             |
-| GET    | `/api/canteen/orders/my`          | STUDENT                | Get my food orders          |
-| GET    | `/api/canteen/orders/:id`         | CANTEEN_MANAGER, ADMIN | Get order details           |
-| GET    | `/api/canteen/orders/student/:id` | CANTEEN_MANAGER, ADMIN | Get student's orders        |
-| GET    | `/api/canteen/dashboard/today`    | CANTEEN_MANAGER, ADMIN | Today's summary             |
+| Method | Endpoint                                 | Role Required          | Description                 |
+| ------ | ---------------------------------------- | ---------------------- | --------------------------- |
+| POST   | `/api/canteen/orders`                    | CANTEEN_MANAGER, ADMIN | Create order by student ID  |
+| POST   | `/api/canteen/orders/quick`              | CANTEEN_MANAGER, ADMIN | Create order by roll number |
+| GET    | `/api/canteen/orders`                    | CANTEEN_MANAGER, ADMIN | List all orders             |
+| GET    | `/api/canteen/orders/my`                 | STUDENT                | Get my food orders          |
+| GET    | `/api/canteen/orders/:id`                | CANTEEN_MANAGER, ADMIN | Get order details           |
+| GET    | `/api/canteen/orders/student/:studentId` | CANTEEN_MANAGER, ADMIN | Get student's orders        |
+| GET    | `/api/canteen/dashboard/today`           | CANTEEN_MANAGER, ADMIN | Today's summary             |
 
 ---
 
@@ -430,9 +700,7 @@ BREAKFAST, LUNCH, EVENING_SNACKS, DINNER, OTHER
 
 ---
 
-### Admin: Setup Menu Items
-
-#### Create Single Menu Item
+### Create Single Menu Item
 
 ```http
 POST /api/canteen/menu
@@ -448,7 +716,7 @@ Content-Type: application/json
 }
 ```
 
-#### Bulk Create Menu Items (Initial Setup)
+### Bulk Create Menu Items
 
 ```http
 POST /api/canteen/menu/bulk
@@ -459,51 +727,12 @@ Content-Type: application/json
   "items": [
     { "name": "Apple", "category": "FRUITS", "price": 20, "unit": "piece" },
     { "name": "Banana", "category": "FRUITS", "price": 10, "unit": "piece" },
-    { "name": "Orange", "category": "FRUITS", "price": 25, "unit": "piece" },
     { "name": "Samosa", "category": "SNACKS", "price": 15, "unit": "piece" },
-    { "name": "Sandwich", "category": "SNACKS", "price": 30, "unit": "piece" },
     { "name": "Tea", "category": "BEVERAGES", "price": 10, "unit": "cup" },
-    { "name": "Coffee", "category": "BEVERAGES", "price": 15, "unit": "cup" },
-    { "name": "Rice Plate", "category": "LUNCH", "price": 50, "unit": "plate" },
-    { "name": "Roti", "category": "LUNCH", "price": 8, "unit": "piece" },
-    { "name": "Dal", "category": "LUNCH", "price": 20, "unit": "bowl" }
+    { "name": "Rice Plate", "category": "LUNCH", "price": 50, "unit": "plate" }
   ]
 }
 ```
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "message": "10 menu items created",
-  "data": { "count": 10 }
-}
-```
-
-#### Update Prices in Bulk
-
-```http
-PATCH /api/canteen/menu/prices
-Authorization: Bearer <admin_token>
-Content-Type: application/json
-
-{
-  "updates": [
-    { "id": "menu_item_id_1", "price": 25 },
-    { "id": "menu_item_id_2", "price": 12 }
-  ]
-}
-```
-
-#### Toggle Item Availability
-
-```http
-PATCH /api/canteen/menu/:id/toggle
-Authorization: Bearer <admin_token>
-```
-
----
 
 ### View Available Menu
 
@@ -514,7 +743,9 @@ Authorization: Bearer <any_token>
 
 **Query Parameters:**
 
-- `category` (optional): Filter by category (e.g., `FRUITS`, `SNACKS`)
+| Parameter  | Required | Description                               |
+| ---------- | -------- | ----------------------------------------- |
+| `category` | No       | Filter by category (e.g., FRUITS, SNACKS) |
 
 **Response:**
 
@@ -523,24 +754,18 @@ Authorization: Bearer <any_token>
   "success": true,
   "data": {
     "items": [
-      { "id": "...", "name": "Apple", "category": "FRUITS", "price": 20, "unit": "piece" },
-      { "id": "...", "name": "Samosa", "category": "SNACKS", "price": 15, "unit": "piece" }
+      { "id": "...", "name": "Apple", "category": "FRUITS", "price": 20, "unit": "piece" }
     ],
     "grouped": {
       "FRUITS": [...],
-      "SNACKS": [...],
-      "BEVERAGES": [...]
+      "SNACKS": [...]
     },
     "total": 10
   }
 }
 ```
 
----
-
-### Canteen Manager: Create Food Order (Billing)
-
-#### Option 1: By Student ID
+### Create Food Order (By Student ID)
 
 ```http
 POST /api/canteen/orders
@@ -548,7 +773,7 @@ Authorization: Bearer <manager_token>
 Content-Type: application/json
 
 {
-  "studentId": "cmiblyvtc0005dujb14zhpf7t",
+  "studentId": "student_uuid",
   "mealType": "LUNCH",
   "items": [
     { "menuItemId": "menu_apple_id", "quantity": 2 },
@@ -557,7 +782,7 @@ Content-Type: application/json
 }
 ```
 
-#### Option 2: By Roll Number (Quick Billing)
+### Create Food Order (By Roll Number - Quick Billing)
 
 ```http
 POST /api/canteen/orders/quick
@@ -579,30 +804,16 @@ Content-Type: application/json
 ```json
 {
   "success": true,
-  "message": "Order ORD-20251206-ABC123 created for John Doe. ₹85.00 deducted.",
+  "message": "Order ORD-20251213-ABC123 created for John Doe. ₹85.00 deducted.",
   "data": {
     "order": {
       "id": "order_uuid",
-      "orderNumber": "ORD-20251206-ABC123",
-      "studentId": "student_uuid",
+      "orderNumber": "ORD-20251213-ABC123",
       "mealType": "LUNCH",
       "totalAmount": 85,
-      "items": [
-        { "itemName": "Apple", "quantity": 2, "unitPrice": 20, "subtotal": 40 },
-        { "itemName": "Samosa", "quantity": 3, "unitPrice": 15, "subtotal": 45 }
-      ],
-      "student": {
-        "email": "student@example.com",
-        "profile": { "name": "John Doe", "rollNo": "S12345" }
-      }
+      "items": [...]
     },
     "receipt": {
-      "orderNumber": "ORD-20251206-ABC123",
-      "studentName": "John Doe",
-      "rollNo": "S12345",
-      "mealType": "LUNCH",
-      "items": [...],
-      "totalAmount": 85,
       "previousBalance": 500,
       "newBalance": 415
     },
@@ -611,18 +822,7 @@ Content-Type: application/json
 }
 ```
 
-**Error (Insufficient Balance):**
-
-```json
-{
-  "success": false,
-  "message": "Insufficient balance. Current: ₹50.00, Required: ₹85.00"
-}
-```
-
----
-
-### Student: View My Food Orders
+### Get My Orders (Student)
 
 ```http
 GET /api/canteen/orders/my
@@ -631,47 +831,15 @@ Authorization: Bearer <student_token>
 
 **Query Parameters:**
 
-- `mealType` (optional): Filter by meal type
-- `startDate`, `endDate` (optional): Date range
-- `page`, `limit` (optional): Pagination
+| Parameter   | Required | Description          |
+| ----------- | -------- | -------------------- |
+| `mealType`  | No       | Filter by meal type  |
+| `startDate` | No       | Start date for range |
+| `endDate`   | No       | End date for range   |
+| `page`      | No       | Page number          |
+| `limit`     | No       | Items per page       |
 
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "orders": [
-      {
-        "id": "order_uuid",
-        "orderNumber": "ORD-20251206-ABC123",
-        "mealType": "LUNCH",
-        "totalAmount": 85,
-        "createdAt": "2025-12-06T12:30:00.000Z",
-        "items": [
-          {
-            "itemName": "Apple",
-            "quantity": 2,
-            "unitPrice": 20,
-            "subtotal": 40
-          },
-          {
-            "itemName": "Samosa",
-            "quantity": 3,
-            "unitPrice": 15,
-            "subtotal": 45
-          }
-        ]
-      }
-    ],
-    "pagination": { "total": 25, "page": 1, "limit": 20, "totalPages": 2 }
-  }
-}
-```
-
----
-
-### Manager Dashboard: Today's Summary
+### Today's Dashboard Summary
 
 ```http
 GET /api/canteen/dashboard/today
@@ -692,8 +860,7 @@ Authorization: Bearer <manager_token>
     ],
     "popularItems": [
       { "name": "Rice Plate", "totalQuantity": 30 },
-      { "name": "Roti", "totalQuantity": 45 },
-      { "name": "Tea", "totalQuantity": 25 }
+      { "name": "Roti", "totalQuantity": 45 }
     ]
   }
 }
@@ -701,12 +868,17 @@ Authorization: Bearer <manager_token>
 
 ---
 
-## 📧 Email Notifications
+## Email Notifications
 
 The system automatically sends emails for:
 
-1. **Transaction Emails** - When money is credited or debited
-2. **Low Balance Alert** - When balance falls below ₹250 after a debit
+| Event                  | Description                                 |
+| ---------------------- | ------------------------------------------- |
+| Registration           | Verification email sent to new users        |
+| Email Verification     | Confirmation when email is verified         |
+| Password Reset Request | Reset link sent to user's email             |
+| Transaction            | When money is credited or debited           |
+| Low Balance Alert      | When balance falls below ₹250 after a debit |
 
 Configure email in `.env`:
 
@@ -716,11 +888,12 @@ EMAIL_PORT=587
 EMAIL_USER=your-email@gmail.com
 EMAIL_PASSWORD=your-app-password
 EMAIL_FROM="CDAC Hostel <your-email@gmail.com>"
+FRONTEND_URL=http://localhost:5173
 ```
 
 ---
 
-## ❤️ Health Check
+## Health Check
 
 ```http
 GET /health
@@ -730,13 +903,34 @@ GET /health
 
 ```json
 {
-  "status": "ok"
+  "status": "ok",
+  "timestamp": "2025-12-13T10:00:00.000Z"
 }
 ```
 
 ---
 
-## 📦 Data Models
+## Data Models
+
+### User Object
+
+```json
+{
+  "id": "uuid",
+  "email": "user@example.com",
+  "role": "STUDENT|WARDEN|ADMIN|CANTEEN_MANAGER",
+  "isEmailVerified": true,
+  "roomId": "room_uuid",
+  "createdAt": "2025-12-13T10:00:00.000Z",
+  "profile": {
+    "name": "User Name",
+    "rollNo": "S12345",
+    "phone": "1234567890",
+    "course": "Computer Science",
+    "year": 2
+  }
+}
+```
 
 ### MenuItem Object
 
@@ -748,8 +942,8 @@ GET /health
   "price": 20,
   "unit": "piece",
   "isAvailable": true,
-  "createdAt": "2025-12-06T10:00:00.000Z",
-  "updatedAt": "2025-12-06T10:00:00.000Z"
+  "createdAt": "2025-12-13T10:00:00.000Z",
+  "updatedAt": "2025-12-13T10:00:00.000Z"
 }
 ```
 
@@ -758,13 +952,13 @@ GET /health
 ```json
 {
   "id": "uuid",
-  "orderNumber": "ORD-20251206-ABC123",
+  "orderNumber": "ORD-20251213-ABC123",
   "studentId": "student_uuid",
   "mealType": "LUNCH",
   "totalAmount": 85,
   "transactionId": "transaction_uuid",
   "servedById": "manager_uuid",
-  "createdAt": "2025-12-06T12:30:00.000Z",
+  "createdAt": "2025-12-13T12:30:00.000Z",
   "items": [
     {
       "id": "uuid",
@@ -777,70 +971,74 @@ GET /health
 }
 ```
 
-### User Object
+---
 
-```json
-{
-  "id": "uuid",
-  "email": "user@example.com",
-  "role": "STUDENT|WARDEN|ADMIN|CANTEEN_MANAGER",
-  "roomId": "room_uuid",
-  "createdAt": "2025-11-22T10:00:00.000Z",
-  "profile": {
-    "name": "User Name",
-    "rollNo": "S12345",
-    "phone": "1234567890",
-    "course": "Computer Science",
-    "year": 2
-  }
-}
-```
+## HTTP Status Codes
+
+| Code | Description                                               |
+| ---- | --------------------------------------------------------- |
+| 200  | Success                                                   |
+| 201  | Created                                                   |
+| 400  | Bad Request (validation error)                            |
+| 401  | Unauthorized (invalid/missing token)                      |
+| 403  | Forbidden (insufficient permissions / email not verified) |
+| 404  | Not Found                                                 |
+| 409  | Conflict (duplicate resource)                             |
+| 500  | Internal Server Error                                     |
 
 ---
 
-## 🚨 HTTP Status Codes
+## Rate Limiting
 
-| Code | Description                          |
-| ---- | ------------------------------------ |
-| 200  | Success                              |
-| 201  | Created                              |
-| 400  | Bad Request (validation error)       |
-| 401  | Unauthorized (invalid/missing token) |
-| 403  | Forbidden (insufficient permissions) |
-| 404  | Not Found                            |
-| 409  | Conflict (duplicate resource)        |
-| 500  | Internal Server Error                |
+| Route Type         | Limit                 |
+| ------------------ | --------------------- |
+| General API        | 100 requests / 15 min |
+| Auth Routes        | 5 requests / 15 min   |
+| Transaction Routes | 30 requests / 15 min  |
 
 ---
 
-**Last Updated**: December 6, 2025  
-**Version**: 2.0.0
+**Last Updated**: December 13, 2025  
+**Version**: 2.1.0
 
-## 📝 Changelog
+## Changelog
+
+### Version 2.1.0 (December 13, 2025)
+
+- Added email verification system
+  - `GET /api/auth/verify-email` - Verify email with token
+  - `POST /api/auth/resend-verification` - Resend verification email
+- Added password reset documentation
+  - `POST /api/auth/forgot-password` - Request reset email
+  - `POST /api/auth/reset-password` - Reset with token
+- Login now requires email verification (returns 403 if not verified)
+- Registration no longer returns tokens (user must verify email first)
+- Added `isEmailVerified` field to User model
+- Verification tokens expire in 24 hours
+- Password reset tokens expire in 15 minutes
 
 ### Version 2.0.0 (December 6, 2025)
 
-- ✅ Added `CANTEEN_MANAGER` role
-- ✅ Added complete canteen food ordering system
-- ✅ Menu management (Admin): create, update, delete, bulk operations
-- ✅ Food order billing (Canteen Manager): by student ID or roll number
-- ✅ Student food order history
-- ✅ Manager dashboard with daily summary
-- ✅ Automatic transaction creation on food orders
-- ✅ Email notifications for transactions
-- ✅ Low balance alerts (below ₹250)
-- ✅ Updated base URL to port 5000
+- Added `CANTEEN_MANAGER` role
+- Added complete canteen food ordering system
+- Menu management (Admin): create, update, delete, bulk operations
+- Food order billing (Canteen Manager): by student ID or roll number
+- Student food order history
+- Manager dashboard with daily summary
+- Automatic transaction creation on food orders
+- Email notifications for transactions
+- Low balance alerts (below ₹250)
 
 ### Version 1.2.0 (November 23, 2025)
 
-- ✅ Added delete user functionality for admins
-- ✅ Transaction management with balance tracking
-- ✅ Wallet summary with statistics
+- Added delete user functionality for admins
+- Transaction management with balance tracking
+- Wallet summary with statistics
 
 ### Version 1.1.0 (November 22, 2025)
 
-- ✅ Implemented complaint service
-- ✅ Fixed registration roles
+- Implemented complaint service
+- Fixed registration roles
 
 ### Version 1.0.0 (November 21, 2025)
 
