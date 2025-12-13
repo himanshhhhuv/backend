@@ -8,10 +8,11 @@ datasource db {
 }
 
 model User {
-  id             String        @id @default(cuid())
-  email          String        @unique
-  password       String?
-  role           Role          @default(STUDENT)
+  id              String        @id @default(cuid())
+  email           String        @unique
+  password        String?
+  isEmailVerified Boolean       @default(false)
+  role            Role          @default(STUDENT)
   profile        Profile?
   room           Room?         @relation(fields: [roomId], references: [id], onDelete: SetNull)
   roomId         String?

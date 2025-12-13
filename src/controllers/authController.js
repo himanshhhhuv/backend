@@ -5,6 +5,8 @@ import {
   refreshAuthToken,
   forgotPassword,
   resetPassword,
+  verifyEmail,
+  resendVerificationEmail,
 } from "../services/authService.js";
 
 export const register = catchAsync(async (req, res) => {
@@ -41,5 +43,23 @@ export const forgotPasswordHandler = catchAsync(async (req, res) => {
 export const resetPasswordHandler = catchAsync(async (req, res) => {
   const { token, password } = req.body;
   const result = await resetPassword(token, password);
+  res.json({ success: true, ...result });
+});
+
+/**
+ * Verify Email - Verify user's email using verification token
+ */
+export const verifyEmailHandler = catchAsync(async (req, res) => {
+  const { token } = req.query;
+  const result = await verifyEmail(token);
+  res.json({ success: true, ...result });
+});
+
+/**
+ * Resend Verification Email - Send a new verification email
+ */
+export const resendVerificationHandler = catchAsync(async (req, res) => {
+  const { email } = req.body;
+  const result = await resendVerificationEmail(email);
   res.json({ success: true, ...result });
 });

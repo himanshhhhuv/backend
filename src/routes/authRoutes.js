@@ -6,6 +6,8 @@ import {
   logout,
   forgotPasswordHandler,
   resetPasswordHandler,
+  verifyEmailHandler,
+  resendVerificationHandler,
 } from "../controllers/authController.js";
 import { validate } from "../middleware/validate.js";
 import { authSchemas } from "../validations/authValidation.js";
@@ -17,6 +19,14 @@ router.post("/register", validate(authSchemas.register), register);
 router.post("/login", validate(authSchemas.login), login);
 router.post("/refresh-token", validate(authSchemas.refresh), refreshToken);
 router.post("/logout", logout);
+
+// Email Verification Flow
+router.get("/verify-email", verifyEmailHandler);
+router.post(
+  "/resend-verification",
+  validate(authSchemas.resendVerification),
+  resendVerificationHandler
+);
 
 // Password Reset Flow
 router.post(

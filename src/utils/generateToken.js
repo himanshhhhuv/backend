@@ -60,3 +60,32 @@ export const generateSecureToken = (bytes = 32) => {
   return crypto.randomBytes(bytes).toString("hex");
 };
 
+/**
+ * Generate an email verification token
+ * Uses JWT with 24-hour expiry
+ * @param {string} userId - User ID to embed in token
+ * @returns {string} - Verification token
+ */
+export const signEmailVerificationToken = (userId) => {
+  const verifySecret = env.jwt.accessSecret + "_EMAIL_VERIFY";
+  return jwt.sign({ userId, purpose: "email_verification" }, verifySecret, {
+    expiresIn: "24h",
+  });
+};
+
+/**
+ * Verify an email verification token
+ * @param {string} token - Verification token to verify
+ * @returns {Object} - Decoded payload with userId
+ */
+export const verifyEmailVerificationToken = (token) => {
+  const verifySecret = env.jwt.accessSecret + "_EMAIL_VERIFY";
+  const decoded = jwt.verify(token, verifySecret);
+
+  // Ensure token was generated for email verification
+  if (decoded.purpose !== "email_verification") {
+    throw new Error("Invalid token purpose");
+  }
+
+  return decoded;
+};

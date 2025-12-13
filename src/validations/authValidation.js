@@ -12,7 +12,7 @@ const register = z.object({
     email: z.string().email(),
     password: z.string().min(6),
     name: z.string().min(1),
-    rollNo: z.string().min(1),
+    rollNo: z.string().min(6),
     phone: z.string().min(10),
     course: z.string().min(1),
     year: z
@@ -23,7 +23,7 @@ const register = z.object({
       .or(z.string().transform((val) => parseInt(val))),
     parentPhone: z.string().min(10).optional(),
     address: z.string().optional(),
-    role: z.enum(["STUDENT", "WARDEN", "ADMIN", "CANTEEN_MANAGER"]).optional(),
+    role: z.enum(["STUDENT"]).optional(), //WARDEN, ADMIN, CANTEEN_MANAGER
   }),
 });
 
@@ -53,10 +53,19 @@ const resetPassword = z.object({
   }),
 });
 
+const resendVerification = z.object({
+  body: z.object({
+    email: z
+      .string({ error: "Email is required" })
+      .email({ error: "Please provide a valid email address" }),
+  }),
+});
+
 export const authSchemas = {
   login: credentials,
   register,
   refresh,
   forgotPassword,
   resetPassword,
+  resendVerification,
 };
