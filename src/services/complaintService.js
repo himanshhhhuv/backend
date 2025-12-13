@@ -1,5 +1,6 @@
 import prisma from "../prisma/client.js";
 import ApiError from "../utils/ApiError.js";
+import { sendComplaintNotification } from "./telegramBotService.js";
 
 /**
  * Create a new complaint
@@ -147,6 +148,20 @@ export const updateComplaintStatus = async (complaintId, status, remarks) => {
       },
     },
   });
+
+  // Send Telegram notification for complaint status change
+  try {
+    await sendComplaintNotification(complaint.studentId, {
+      title: complaint.title,
+      status: complaint.status,
+    });
+  } catch (notifyError) {
+    console.error(
+      "Failed to send Telegram complaint notification:",
+      notifyError
+    );
+    // Don't throw - notification failure shouldn't fail the status update
+  }
 
   return complaint;
 };

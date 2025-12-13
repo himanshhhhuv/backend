@@ -1,5 +1,6 @@
 import prisma from "../prisma/client.js";
 import ApiError from "../utils/ApiError.js";
+import { sendLeaveNotification } from "./telegramBotService.js";
 
 export const createLeaveRequest = async (userId, payload) => {
   const { fromDate, toDate, reason } = payload;
@@ -33,16 +34,16 @@ export const listLeaves = async (userId) => {
       student: {
         include: {
           profile: {
-            select:{
-              id:true,
-              name:true,
-              rollNo:true,
-              phone:true,
-                 
-              course:true,
+            select: {
+              id: true,
+              name: true,
+              rollNo: true,
+              phone: true,
+
+              course: true,
             },
           },
-          password:false,
+          password: false,
         },
       },
       approvedBy: {
@@ -109,6 +110,20 @@ export const updateLeaveStatus = async (leaveId, status, approverId) => {
       },
     },
   });
+
+  // Send Telegram notification for leave status change
+  if (status === "APPROVED" || status === "REJECTED") {
+    try {
+      await sendLeaveNotification(leave.studentId, status, {
+        fromDate: leave.fromDate,
+        toDate: leave.toDate,
+        reason: leave.reason,
+      });
+    } catch (notifyError) {
+      console.error("Failed to send Telegram leave notification:", notifyError);
+      // Don't throw - notification failure shouldn't fail the status update
+    }
+  }
 
   return leave;
 };

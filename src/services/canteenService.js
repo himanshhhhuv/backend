@@ -5,6 +5,10 @@ import {
   sendLowBalanceEmail,
   LOW_BALANCE_THRESHOLD,
 } from "./notificationService.js";
+import {
+  sendTransactionNotification,
+  sendLowBalanceNotification,
+} from "./telegramBotService.js";
 
 /**
  * Get student's balance from all transactions
@@ -287,8 +291,19 @@ export const addTransaction = async (payload) => {
     console.error("Failed to send transaction email:", emailError);
   }
 
+  // Send Telegram transaction notification
+  try {
+    await sendTransactionNotification(studentId, transaction, newBalance);
+  } catch (telegramError) {
+    console.error(
+      "Failed to send Telegram transaction notification:",
+      telegramError
+    );
+  }
+
   // Send low balance warning if balance drops below threshold after DEBIT
   if (type === "DEBIT" && newBalance < LOW_BALANCE_THRESHOLD) {
+    // Email notification
     try {
       await sendLowBalanceEmail({
         studentEmail: student.email,
@@ -302,6 +317,16 @@ export const addTransaction = async (payload) => {
       );
     } catch (emailError) {
       console.error("Failed to send low balance email:", emailError);
+    }
+
+    // Telegram notification
+    try {
+      await sendLowBalanceNotification(studentId, newBalance);
+    } catch (telegramError) {
+      console.error(
+        "Failed to send Telegram low balance notification:",
+        telegramError
+      );
     }
   }
 

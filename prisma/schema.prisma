@@ -27,17 +27,20 @@ model User {
 }
 
 model Profile {
-  id           String   @id @default(cuid())
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId       String   @unique
-  name         String
-  rollNo       String   @unique
-  phone        String
-  parentPhone  String?
-  photo        String?
-  course       String
-  year         Int
-  address      String?
+  id             String   @id @default(cuid())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String   @unique
+  name           String
+  rollNo         String   @unique
+  phone          String
+  parentPhone    String?
+  photo          String?
+  course         String
+  year           Int
+  address        String?
+  // Telegram Bot Integration
+  telegramChatId String?  @unique  // Telegram chat ID for bot messaging
+  telegramLinkedAt DateTime?       // When the Telegram was linked
 }
 
 model Room {
