@@ -392,43 +392,94 @@ const registerCommandHandlers = () => {
       const leaves = await listLeaves(user.id);
 
       if (!leaves || leaves.length === 0) {
-        await bot.sendMessage(chatId, `📋 You have no leave requests.`);
+        await bot.sendMessage(
+          chatId,
+          `📋 *Leave Requests*\n\n` +
+            `┌─────────────────────────────┐\n` +
+            `│  No leave requests found.   │\n` +
+            `└─────────────────────────────┘\n\n` +
+            `💡 Apply for leave through the web portal.`,
+          { parse_mode: "Markdown" }
+        );
         return;
       }
 
       // Calculate stats
+      const total = leaves.length;
       const pending = leaves.filter((l) => l.status === "PENDING").length;
       const approved = leaves.filter((l) => l.status === "APPROVED").length;
       const rejected = leaves.filter((l) => l.status === "REJECTED").length;
 
+      // Create progress bar for approval rate
+      const approvalRate = total > 0 ? Math.round((approved / total) * 100) : 0;
+      const filledBlocks = Math.round(approvalRate / 10);
+      const progressBar =
+        "█".repeat(filledBlocks) + "░".repeat(10 - filledBlocks);
+
+      // Build stats table
+      let statsTable =
+        `\`\`\`\n` +
+        `╔═══════════════════════════════╗\n` +
+        `║     📋 LEAVE SUMMARY          ║\n` +
+        `╠═══════════════════════════════╣\n` +
+        `║  ⏳ Pending    │    ${String(pending).padStart(3)}        ║\n` +
+        `║  ✅ Approved   │    ${String(approved).padStart(3)}        ║\n` +
+        `║  ❌ Rejected   │    ${String(rejected).padStart(3)}        ║\n` +
+        `╠═══════════════════════════════╣\n` +
+        `║  📊 Total      │    ${String(total).padStart(3)}        ║\n` +
+        `╚═══════════════════════════════╝\n` +
+        `\`\`\``;
+
+      // Approval rate visual
+      let approvalRateText =
+        `\n*Approval Rate:* ${approvalRate}%\n` + `\`[${progressBar}]\`\n`;
+
       // Get recent leaves (last 5)
       const recentLeaves = leaves.slice(0, 5);
-      let leavesText = recentLeaves
-        .map((l) => {
-          const statusEmoji =
-            l.status === "APPROVED"
-              ? "✅"
-              : l.status === "REJECTED"
-              ? "❌"
-              : "⏳";
-          return (
-            `${statusEmoji} ${formatDate(l.fromDate)} - ${formatDate(
-              l.toDate
-            )}\n` +
-            `   └ ${l.reason.substring(0, 30)}${
-              l.reason.length > 30 ? "..." : ""
-            }`
-          );
-        })
-        .join("\n\n");
+
+      // Build leaves table
+      let leavesTable = `\n📅 *Recent Leave Requests:*\n\n`;
+
+      recentLeaves.forEach((l, index) => {
+        const statusEmoji =
+          l.status === "APPROVED"
+            ? "✅"
+            : l.status === "REJECTED"
+            ? "❌"
+            : "⏳";
+
+        const fromDate = formatDate(l.fromDate);
+        const toDate = formatDate(l.toDate);
+
+        // Calculate duration
+        const diffTime = Math.abs(new Date(l.toDate) - new Date(l.fromDate));
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        const durationText = diffDays === 1 ? "1 day" : `${diffDays} days`;
+
+        const statusText = l.status.charAt(0) + l.status.slice(1).toLowerCase();
+        const reason =
+          l.reason.length > 25 ? l.reason.substring(0, 25) + "..." : l.reason;
+
+        leavesTable +=
+          `${statusEmoji} *#${index + 1}* — _${statusText}_\n` +
+          `┌ 📆 \`${fromDate}\` → \`${toDate}\`\n` +
+          `├ ⏱️ Duration: ${durationText}\n` +
+          `└ 📝 ${reason}\n\n`;
+      });
+
+      // Add tip for pending leaves
+      const tipText =
+        pending > 0
+          ? `\n💡 _You have ${pending} pending request(s). Check the portal for updates._`
+          : "";
 
       await bot.sendMessage(
         chatId,
-        `📋 *Your Leave Requests*\n\n` +
-          `⏳ Pending: ${pending}\n` +
-          `✅ Approved: ${approved}\n` +
-          `❌ Rejected: ${rejected}\n\n` +
-          `📅 *Recent Requests:*\n\n${leavesText}`,
+        `📋 *Your Leave Requests*\n` +
+          statsTable +
+          approvalRateText +
+          leavesTable +
+          tipText,
         { parse_mode: "Markdown" }
       );
     } catch (error) {
@@ -559,42 +610,116 @@ const registerCommandHandlers = () => {
       const complaints = await listComplaints({ studentId: user.id });
 
       if (!complaints || complaints.length === 0) {
-        await bot.sendMessage(chatId, `🔧 You have no complaints registered.`);
+        await bot.sendMessage(
+          chatId,
+          `🔧 *Complaints*\n\n` +
+            `┌─────────────────────────────┐\n` +
+            `│   No complaints found.      │\n` +
+            `└─────────────────────────────┘\n\n` +
+            `💡 Register complaints through the web portal.`,
+          { parse_mode: "Markdown" }
+        );
         return;
       }
 
       // Calculate stats
+      const total = complaints.length;
       const pending = complaints.filter((c) => c.status === "PENDING").length;
       const inProgress = complaints.filter(
         (c) => c.status === "IN_PROGRESS"
       ).length;
       const resolved = complaints.filter((c) => c.status === "RESOLVED").length;
 
+      // Create resolution rate progress bar
+      const resolutionRate =
+        total > 0 ? Math.round((resolved / total) * 100) : 0;
+      const filledBlocks = Math.round(resolutionRate / 10);
+      const progressBar =
+        "█".repeat(filledBlocks) + "░".repeat(10 - filledBlocks);
+
+      // Build stats table
+      let statsTable =
+        `\`\`\`\n` +
+        `╔═══════════════════════════════╗\n` +
+        `║     🔧 COMPLAINTS SUMMARY     ║\n` +
+        `╠═══════════════════════════════╣\n` +
+        `║  ⏳ Pending     │    ${String(pending).padStart(3)}       ║\n` +
+        `║  🔄 In Progress │    ${String(inProgress).padStart(3)}       ║\n` +
+        `║  ✅ Resolved    │    ${String(resolved).padStart(3)}       ║\n` +
+        `╠═══════════════════════════════╣\n` +
+        `║  📊 Total       │    ${String(total).padStart(3)}       ║\n` +
+        `╚═══════════════════════════════╝\n` +
+        `\`\`\``;
+
+      // Resolution rate visual
+      let resolutionRateText =
+        `\n*Resolution Rate:* ${resolutionRate}%\n` + `\`[${progressBar}]\`\n`;
+
       // Get recent complaints (last 5)
       const recentComplaints = complaints.slice(0, 5);
-      let complaintsText = recentComplaints
-        .map((c) => {
-          const statusEmoji =
-            c.status === "RESOLVED"
-              ? "✅"
-              : c.status === "IN_PROGRESS"
-              ? "🔄"
-              : "⏳";
-          return (
-            `${statusEmoji} *${c.title.substring(0, 25)}${
-              c.title.length > 25 ? "..." : ""
-            }*\n` + `   └ Status: ${c.status.replace("_", " ")}`
-          );
-        })
-        .join("\n\n");
+
+      // Build complaints list with categories
+      let complaintsTable = `\n📋 *Recent Complaints:*\n\n`;
+
+      recentComplaints.forEach((c, index) => {
+        const statusEmoji =
+          c.status === "RESOLVED"
+            ? "✅"
+            : c.status === "IN_PROGRESS"
+            ? "🔄"
+            : "⏳";
+
+        // Status with visual indicator
+        const statusBar =
+          c.status === "RESOLVED"
+            ? "████████"
+            : c.status === "IN_PROGRESS"
+            ? "████░░░░"
+            : "██░░░░░░";
+
+        const statusText = c.status.replace("_", " ");
+        const title =
+          c.title.length > 22 ? c.title.substring(0, 22) + "..." : c.title;
+        const category = c.category || "General";
+        const createdDate = formatDate(c.createdAt);
+
+        // Category emoji
+        const categoryEmojis = {
+          ELECTRICAL: "⚡",
+          PLUMBING: "🚿",
+          FURNITURE: "🪑",
+          CLEANING: "🧹",
+          FOOD: "🍽️",
+          NETWORK: "📶",
+          OTHER: "📌",
+          GENERAL: "📌",
+        };
+        const categoryEmoji = categoryEmojis[category.toUpperCase()] || "📌";
+
+        complaintsTable +=
+          `${statusEmoji} *#${index + 1}* — ${title}\n` +
+          `┌ ${categoryEmoji} Category: _${category}_\n` +
+          `├ 📅 Filed: ${createdDate}\n` +
+          `├ 📊 Status: \`${statusText}\`\n` +
+          `└ Progress: \`[${statusBar}]\`\n\n`;
+      });
+
+      // Add tips based on status
+      let tipText = "";
+      if (pending > 0) {
+        tipText = `\n⏳ _${pending} complaint(s) awaiting review._`;
+      }
+      if (inProgress > 0) {
+        tipText += `\n🔄 _${inProgress} complaint(s) being worked on._`;
+      }
 
       await bot.sendMessage(
         chatId,
-        `🔧 *Your Complaints*\n\n` +
-          `⏳ Pending: ${pending}\n` +
-          `🔄 In Progress: ${inProgress}\n` +
-          `✅ Resolved: ${resolved}\n\n` +
-          `📋 *Recent Complaints:*\n\n${complaintsText}`,
+        `🔧 *Your Complaints*\n` +
+          statsTable +
+          resolutionRateText +
+          complaintsTable +
+          tipText,
         { parse_mode: "Markdown" }
       );
     } catch (error) {
