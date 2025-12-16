@@ -90,7 +90,7 @@ export const listComplaints = async (filter = {}) => {
       },
     },
     orderBy: {
-      id: "desc", // Most recent first
+      createdAt: "desc", // Most recent first
     },
   });
 

@@ -54,7 +54,13 @@ export const createUser = catchAsync(async (req, res) => {
   }
 
   // Validate role
-  const validRoles = ["STUDENT", "WARDEN", "ADMIN", "CANTEEN_MANAGER"];
+  const validRoles = [
+    "STUDENT",
+    "WARDEN",
+    "ADMIN",
+    "CANTEEN_MANAGER",
+    "CARETAKER",
+  ];
   const userRole = role || "STUDENT";
   if (!validRoles.includes(userRole)) {
     throw new ApiError(400, "Invalid role");
@@ -139,7 +145,13 @@ export const listUsers = catchAsync(async (req, res) => {
   // Build where clause for filtering
   const where = {};
   if (role) {
-    const validRoles = ["STUDENT", "WARDEN", "ADMIN", "CANTEEN_MANAGER"];
+    const validRoles = [
+      "STUDENT",
+      "WARDEN",
+      "ADMIN",
+      "CANTEEN_MANAGER",
+      "CARETAKER",
+    ];
     if (!validRoles.includes(role)) {
       throw new ApiError(400, "Invalid role filter");
     }

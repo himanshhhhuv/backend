@@ -8,6 +8,7 @@ import studentRoutes from "./routes/studentRoutes.js";
 import wardenRoutes from "./routes/wardenRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import canteenRoutes from "./routes/canteenRoutes.js";
+import caretakerRoutes from "./routes/caretakerRoutes.js";
 import errorHandler from "./middleware/errorHandler.js";
 import {
   helmetMiddleware,
@@ -71,6 +72,9 @@ app.use("/api/admin", adminRoutes);
 
 // Canteen routes with transaction rate limiting
 app.use("/api/canteen", transactionLimiter, canteenRoutes);
+
+// Caretaker routes
+app.use("/api/caretaker", caretakerRoutes);
 
 // =========================
 // ERROR HANDLING

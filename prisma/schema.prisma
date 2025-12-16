@@ -128,14 +128,15 @@ model OrderItem {
 }
 
 model Complaint {
-  id         String          @id @default(cuid())
-  student    User            @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  studentId  String
-  title      String
+  id          String          @id @default(cuid())
+  student     User            @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentId   String
+  title       String
   description String
-  image      String?
-  status     ComplaintStatus @default(PENDING)
-  resolvedAt DateTime?
+  image       String?
+  status      ComplaintStatus @default(PENDING)
+  createdAt   DateTime        @default(now())
+  resolvedAt  DateTime?
 }
 
 enum Role {
@@ -143,6 +144,7 @@ enum Role {
   WARDEN
   ADMIN
   CANTEEN_MANAGER
+  CARETAKER
 }
 
 enum AttendanceStatus {
