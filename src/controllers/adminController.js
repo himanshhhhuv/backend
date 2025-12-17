@@ -123,10 +123,10 @@ export const createUser = catchAsync(async (req, res) => {
 });
 
 /**
- * List all users with filtering and pagination
+ * List all users with filtering, search, and pagination
  */
 export const listUsers = catchAsync(async (req, res) => {
-  const { role, page = 1, limit = 10 } = req.query;
+  const { role, search, page = 1, limit = 10 } = req.query;
 
   // Parse pagination parameters
   const pageNum = parseInt(page, 10);
@@ -144,6 +144,8 @@ export const listUsers = catchAsync(async (req, res) => {
 
   // Build where clause for filtering
   const where = {};
+
+  // Role filter
   if (role) {
     const validRoles = [
       "STUDENT",
@@ -156,6 +158,16 @@ export const listUsers = catchAsync(async (req, res) => {
       throw new ApiError(400, "Invalid role filter");
     }
     where.role = role;
+  }
+
+  // Search filter (by name, email, or rollNo)
+  if (search && search.trim()) {
+    const searchTerm = search.trim();
+    where.OR = [
+      { email: { contains: searchTerm, mode: "insensitive" } },
+      { profile: { name: { contains: searchTerm, mode: "insensitive" } } },
+      { profile: { rollNo: { contains: searchTerm, mode: "insensitive" } } },
+    ];
   }
 
   // Get users with pagination
@@ -425,6 +437,88 @@ export const deleteUser = catchAsync(async (req, res) => {
       name: user.profile?.name,
       role: user.role,
     },
+  });
+});
+
+/**
+ * Update a user's role
+ */
+export const updateUserRole = catchAsync(async (req, res) => {
+  const { id: userId } = req.params;
+  const { role } = req.body;
+
+  // Validate role
+  const validRoles = [
+    "STUDENT",
+    "WARDEN",
+    "ADMIN",
+    "CANTEEN_MANAGER",
+    "CARETAKER",
+  ];
+
+  if (!role || !validRoles.includes(role)) {
+    throw new ApiError(
+      400,
+      "Invalid role. Must be one of: " + validRoles.join(", ")
+    );
+  }
+
+  // Check if user exists
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      profile: {
+        select: {
+          name: true,
+        },
+      },
+    },
+  });
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  // Prevent changing own role
+  if (userId === req.user.id) {
+    throw new ApiError(400, "You cannot change your own role");
+  }
+
+  // If demoting an admin, check that they're not the last one
+  if (user.role === "ADMIN" && role !== "ADMIN") {
+    const adminCount = await prisma.user.count({
+      where: { role: "ADMIN" },
+    });
+
+    if (adminCount <= 1) {
+      throw new ApiError(
+        400,
+        "Cannot demote the last admin. Please create another admin first."
+      );
+    }
+  }
+
+  // Update user role
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: { role },
+    select: {
+      id: true,
+      email: true,
+      role: true,
+      profile: {
+        select: {
+          name: true,
+          rollNo: true,
+        },
+      },
+    },
+  });
+
+  res.json({
+    success: true,
+    message: `User role updated to ${role}`,
+    data: updatedUser,
   });
 });
 

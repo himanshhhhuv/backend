@@ -6,6 +6,7 @@ import {
   createUser,
   listUsers,
   deleteUser,
+  updateUserRole,
   createRoom,
   assignRoom,
   getSummaryReport,
@@ -24,6 +25,7 @@ router.use(protect, allowRoles("ADMIN"));
 // User management
 router.post("/users", createUser);
 router.get("/users", listUsers);
+router.patch("/users/:id/role", updateUserRole);
 router.delete("/users/:id", deleteUser);
 
 // Room management
