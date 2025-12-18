@@ -180,6 +180,59 @@ export const registerUser = async (data) => {
 };
 
 /**
+ * Change password for an authenticated user
+ * @param {string} userId - ID from access token
+ * @param {string} currentPassword - Current password supplied by user
+ * @param {string} newPassword - New password to set
+ */
+export const changePassword = async (userId, currentPassword, newPassword) => {
+  // Basic validation
+  if (!currentPassword || !newPassword) {
+    throw new ApiError(400, "Current password and new password are required");
+  }
+
+  if (newPassword.length < 6) {
+    throw new ApiError(400, "New password must be at least 6 characters long");
+  }
+
+  // Fetch user with password hash
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user || !user.password) {
+    throw new ApiError(401, "Invalid credentials");
+  }
+
+  // Verify current password
+  const isCurrentValid = await bcrypt.compare(currentPassword, user.password);
+  if (!isCurrentValid) {
+    throw new ApiError(401, "Current password is incorrect");
+  }
+
+  // Prevent reusing the same password
+  const isSamePassword = await bcrypt.compare(newPassword, user.password);
+  if (isSamePassword) {
+    throw new ApiError(
+      400,
+      "New password must be different from the current password"
+    );
+  }
+
+  // Hash and update password
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { password: hashedPassword },
+  });
+
+  return {
+    message: "Password updated successfully",
+  };
+};
+
+/**
  * Login user with email and password
  * @param {Object} credentials - Login credentials
  * @returns {Object} - User data with tokens

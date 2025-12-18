@@ -53,6 +53,23 @@ const resetPassword = z.object({
   }),
 });
 
+const changePassword = z.object({
+  body: z.object({
+    currentPassword: z
+      .string({ error: "Current password is required" })
+      .min(6, {
+        error: "Current password must be at least 6 characters long",
+      })
+      .max(128, { error: "Current password is too long" }),
+    newPassword: z
+      .string({ error: "New password is required" })
+      .min(6, {
+        error: "New password must be at least 6 characters long",
+      })
+      .max(128, { error: "New password is too long" }),
+  }),
+});
+
 const resendVerification = z.object({
   body: z.object({
     email: z
@@ -68,4 +85,5 @@ export const authSchemas = {
   forgotPassword,
   resetPassword,
   resendVerification,
+  changePassword,
 };

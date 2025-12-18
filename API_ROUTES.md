@@ -28,16 +28,17 @@ Base URL: `http://localhost:5000` (adjust port as needed)
 
 **Base Path:** `/api/auth`
 
-| Method | Endpoint                        | Auth Required | Description                  |
-| ------ | ------------------------------- | ------------- | ---------------------------- |
-| POST   | `/api/auth/register`            | No            | Register a new user          |
-| POST   | `/api/auth/login`               | No            | Login user                   |
-| POST   | `/api/auth/refresh-token`       | No            | Refresh access token         |
-| POST   | `/api/auth/logout`              | No            | Logout user                  |
-| GET    | `/api/auth/verify-email`        | No            | Verify email address         |
-| POST   | `/api/auth/resend-verification` | No            | Resend verification email    |
-| POST   | `/api/auth/forgot-password`     | No            | Request password reset email |
-| POST   | `/api/auth/reset-password`      | No            | Reset password with token    |
+| Method | Endpoint                        | Auth Required | Description                          |
+| ------ | ------------------------------- | ------------- | ------------------------------------ |
+| POST   | `/api/auth/register`            | No            | Register a new user                  |
+| POST   | `/api/auth/login`               | No            | Login user                           |
+| POST   | `/api/auth/refresh-token`       | No            | Refresh access token                 |
+| POST   | `/api/auth/logout`              | No            | Logout user                          |
+| GET    | `/api/auth/verify-email`        | No            | Verify email address                 |
+| POST   | `/api/auth/resend-verification` | No            | Resend verification email            |
+| POST   | `/api/auth/forgot-password`     | No            | Request password reset email         |
+| POST   | `/api/auth/reset-password`      | No            | Reset password with token            |
+| PUT    | `/api/auth/change-password`     | Yes           | Change password (authenticated user) |
 
 ---
 
@@ -324,6 +325,32 @@ Content-Type: application/json
 
 ---
 
+### 9. Change Password (Authenticated)
+
+Change the password for the currently logged-in user using the current password.
+
+```http
+PUT /api/auth/change-password
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "currentPassword": "OldPassword123!",
+  "newPassword": "NewPassword123!"
+}
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "success": true,
+  "message": "Password updated successfully"
+}
+```
+
+---
+
 ## Student Routes
 
 **Base Path:** `/api/student`  
@@ -528,18 +555,20 @@ Content-Type: application/json
 **Auth Required:** Yes (Role: ADMIN)  
 **Headers Required:** `Authorization: Bearer <access_token>`
 
-| Method | Endpoint                                | Description                      |
-| ------ | --------------------------------------- | -------------------------------- |
-| POST   | `/api/admin/users`                      | Create new user (any role)       |
-| GET    | `/api/admin/users`                      | List all users                   |
-| DELETE | `/api/admin/users/:id`                  | Delete a user                    |
-| POST   | `/api/admin/rooms`                      | Create new room                  |
-| PATCH  | `/api/admin/rooms/:id/assign`           | Assign room to student           |
-| GET    | `/api/admin/reports/summary`            | Get summary report               |
-| POST   | `/api/admin/canteen/transactions`       | Create canteen transaction       |
-| GET    | `/api/admin/canteen/transactions`       | List all transactions (filtered) |
-| GET    | `/api/admin/canteen/stats`              | Get transaction statistics       |
-| GET    | `/api/admin/canteen/balance/:studentId` | Get specific student's balance   |
+| Method | Endpoint                                | Description                             |
+| ------ | --------------------------------------- | --------------------------------------- |
+| POST   | `/api/admin/users`                      | Create new user (any role)              |
+| GET    | `/api/admin/users`                      | List all users                          |
+| DELETE | `/api/admin/users/:id`                  | Delete a user                           |
+| POST   | `/api/admin/rooms`                      | Create new room                         |
+| PATCH  | `/api/admin/rooms/:id/assign`           | Assign room to student                  |
+| DELETE | `/api/admin/rooms/:id/assign`           | Unassign a student from a room          |
+| GET    | `/api/admin/rooms`                      | List rooms with students and pagination |
+| GET    | `/api/admin/reports/summary`            | Get summary report                      |
+| POST   | `/api/admin/canteen/transactions`       | Create canteen transaction              |
+| GET    | `/api/admin/canteen/transactions`       | List all transactions (filtered)        |
+| GET    | `/api/admin/canteen/stats`              | Get transaction statistics              |
+| GET    | `/api/admin/canteen/balance/:studentId` | Get specific student's balance          |
 
 ### 1. Create User (Any Role)
 
@@ -612,7 +641,72 @@ Content-Type: application/json
 }
 ```
 
-### 6. Create Canteen Transaction (Add/Deduct Money)
+### 6. Unassign Room from Student
+
+```http
+DELETE /api/admin/rooms/:id/assign
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "studentId": "student_uuid"
+}
+```
+
+Removes the student from the specified room and decrements the room's `occupied` count (if greater than 0).
+
+  ### 7. List Rooms
+
+  ```http
+  GET /api/admin/rooms?page=1&limit=10&floor=1&onlyAvailable=true
+  Authorization: Bearer <access_token>
+  ```
+
+  **Query Parameters:**
+
+  | Parameter       | Required | Description                              |
+  | --------------- | -------- | ---------------------------------------- |
+  | `page`          | No       | Page number (default: 1)                 |
+  | `limit`         | No       | Items per page (default: 10, max: 100)   |
+  | `floor`         | No       | Filter rooms by floor                    |
+  | `onlyAvailable` | No       | If `true`, only rooms with free capacity |
+
+  **Response:**
+
+  ```json
+  {
+    "success": true,
+    "data": {
+      "rooms": [
+        {
+          "id": "room_uuid",
+          "roomNo": "A101",
+          "floor": 1,
+          "capacity": 4,
+          "occupied": 2,
+          "students": [
+            {
+              "id": "student_uuid",
+              "email": "student@example.com",
+              "profile": {
+                "name": "John Doe",
+                "rollNo": "S12345"
+              }
+            }
+          ]
+        }
+      ],
+      "pagination": {
+        "total": 5,
+        "page": 1,
+        "limit": 10,
+        "totalPages": 1
+      }
+    }
+  }
+  ```
+
+### 8. Create Canteen Transaction (Add/Deduct Money)
 
 ```http
 POST /api/admin/canteen/transactions

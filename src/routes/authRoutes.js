@@ -6,11 +6,13 @@ import {
   logout,
   forgotPasswordHandler,
   resetPasswordHandler,
+  changePasswordHandler,
   verifyEmailHandler,
   resendVerificationHandler,
 } from "../controllers/authController.js";
 import { validate } from "../middleware/validate.js";
 import { authSchemas } from "../validations/authValidation.js";
+import { protect } from "../middleware/auth.js";
 
 const router = Router();
 
@@ -19,6 +21,14 @@ router.post("/register", validate(authSchemas.register), register);
 router.post("/login", validate(authSchemas.login), login);
 router.post("/refresh-token", validate(authSchemas.refresh), refreshToken);
 router.post("/logout", logout);
+
+// Authenticated password change
+router.put(
+  "/change-password",
+  protect,
+  validate(authSchemas.changePassword),
+  changePasswordHandler
+);
 
 // Email Verification Flow
 router.get("/verify-email", verifyEmailHandler);

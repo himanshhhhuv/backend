@@ -7,6 +7,7 @@ import {
   resetPassword,
   verifyEmail,
   resendVerificationEmail,
+  changePassword,
 } from "../services/authService.js";
 
 export const register = catchAsync(async (req, res) => {
@@ -43,6 +44,19 @@ export const forgotPasswordHandler = catchAsync(async (req, res) => {
 export const resetPasswordHandler = catchAsync(async (req, res) => {
   const { token, password } = req.body;
   const result = await resetPassword(token, password);
+  res.json({ success: true, ...result });
+});
+
+/**
+ * Change Password - Authenticated user updates password using current password
+ */
+export const changePasswordHandler = catchAsync(async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  const result = await changePassword(
+    req.user.userId,
+    currentPassword,
+    newPassword
+  );
   res.json({ success: true, ...result });
 });
 

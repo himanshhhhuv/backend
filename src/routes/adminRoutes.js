@@ -10,6 +10,8 @@ import {
   createRoom,
   assignRoom,
   getSummaryReport,
+  listRooms,
+  unassignRoom,
 } from "../controllers/adminController.js";
 import {
   createTransaction,
@@ -31,6 +33,8 @@ router.delete("/users/:id", deleteUser);
 // Room management
 router.post("/rooms", createRoom);
 router.patch("/rooms/:id/assign", assignRoom);
+router.get("/rooms", listRooms);
+router.delete("/rooms/:id/assign", unassignRoom);
 
 // Reports
 router.get("/reports/summary", getSummaryReport);
