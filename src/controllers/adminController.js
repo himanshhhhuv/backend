@@ -126,7 +126,7 @@ export const createUser = catchAsync(async (req, res) => {
  * List all users with filtering, search, and pagination
  */
 export const listUsers = catchAsync(async (req, res) => {
-  const { role, search, page = 1, limit = 10 } = req.query;
+  const { role, search, page = 1, limit = 10, unassigned } = req.query;
 
   // Parse pagination parameters
   const pageNum = parseInt(page, 10);
@@ -158,6 +158,11 @@ export const listUsers = catchAsync(async (req, res) => {
       throw new ApiError(400, "Invalid role filter");
     }
     where.role = role;
+  }
+
+  // Unassigned filter (users without room assignment)
+  if (unassigned === "true") {
+    where.roomId = null;
   }
 
   // Search filter (by name, email, or rollNo)
