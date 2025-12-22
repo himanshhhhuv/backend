@@ -7,6 +7,7 @@ import {
   getTransactionStats,
   getStudentWalletSummary,
 } from "../services/canteenService.js";
+import { getCanteenDashboardStats } from "../services/statsService.js";
 
 /**
  * Get student's canteen info (balance + transactions)
@@ -112,5 +113,16 @@ export const getStudentBalanceAdmin = catchAsync(async (req, res) => {
       balance,
       transactionCount: transactions.length,
     },
+  });
+});
+
+/**
+ * Get canteen manager dashboard statistics
+ */
+export const getDashboardStats = catchAsync(async (req, res) => {
+  const stats = await getCanteenDashboardStats();
+  res.json({
+    success: true,
+    data: stats,
   });
 });

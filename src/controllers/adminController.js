@@ -2,6 +2,7 @@ import catchAsync from "../utils/catchAsync.js";
 import prisma from "../prisma/client.js";
 import ApiError from "../utils/ApiError.js";
 import bcrypt from "bcryptjs";
+import { getAdminDashboardStats } from "../services/statsService.js";
 
 /**
  * Create a new user (Admin can create users with any role)
@@ -808,5 +809,18 @@ export const getSummaryReport = catchAsync(async (req, res) => {
         percentage: parseFloat(attendancePercentage.toFixed(2)),
       },
     },
+  });
+});
+
+/**
+ * Get admin dashboard statistics
+ * Combines hostel, leaves, complaints, attendance and canteen KPIs
+ */
+export const getDashboardStats = catchAsync(async (req, res) => {
+  const stats = await getAdminDashboardStats();
+
+  res.json({
+    success: true,
+    data: stats,
   });
 });

@@ -11,12 +11,14 @@ import {
   getStudentAttendanceById,
   listAllComplaints,
   updateComplaint,
+  getDashboardStats,
 } from "../controllers/wardenController.js";
 
 const router = Router();
 
 router.use(protect, allowRoles("WARDEN", "ADMIN"));
 
+router.get("/dashboard/stats", getDashboardStats);
 router.get("/leaves/pending", getPendingLeaves);
 router.patch(
   "/leaves/:id/approve",

@@ -12,6 +12,7 @@ import {
   getSummaryReport,
   listRooms,
   unassignRoom,
+  getDashboardStats,
 } from "../controllers/adminController.js";
 import {
   createTransaction,
@@ -38,6 +39,7 @@ router.delete("/rooms/:id/assign", unassignRoom);
 
 // Reports
 router.get("/reports/summary", getSummaryReport);
+router.get("/dashboard/stats", getDashboardStats);
 
 // Canteen / Transaction management
 router.post(

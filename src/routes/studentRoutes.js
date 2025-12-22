@@ -12,12 +12,16 @@ import {
   createLeave,
   listStudentComplaints,
   createStudentComplaint,
+  getDashboardStats,
 } from "../controllers/studentController.js";
 import { getWalletSummary } from "../controllers/canteenController.js";
 
 const router = Router();
 
 router.use(protect, allowRoles("STUDENT"));
+
+// Dashboard
+router.get("/dashboard/stats", getDashboardStats);
 
 // Profile
 router.get("/me", getProfile);

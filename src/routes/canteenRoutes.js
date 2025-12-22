@@ -4,6 +4,7 @@ import { validate } from "../middleware/validate.js";
 import { menuSchemas, orderSchemas } from "../validations/menuValidation.js";
 import * as menuController from "../controllers/menuController.js";
 import * as foodOrderController from "../controllers/foodOrderController.js";
+import { getDashboardStats as getCanteenDashboardStats } from "../controllers/canteenController.js";
 
 const router = Router();
 
@@ -49,11 +50,18 @@ router.get(
   foodOrderController.listOrders
 );
 
-// Get today's summary (dashboard)
+// Get today's summary (dashboard - legacy)
 router.get(
   "/dashboard/today",
   allowRoles("CANTEEN_MANAGER", "ADMIN"),
   foodOrderController.todaySummary
+);
+
+// New: unified dashboard statistics
+router.get(
+  "/dashboard/stats",
+  allowRoles("CANTEEN_MANAGER", "ADMIN"),
+  getCanteenDashboardStats
 );
 
 // Get specific order details
@@ -73,11 +81,7 @@ router.get(
 // ==================== ADMIN ROUTES (Menu Management) ====================
 
 // Get all menu items (including unavailable)
-router.get(
-  "/menu/all",
-  allowRoles("ADMIN"),
-  menuController.getAll
-);
+router.get("/menu/all", allowRoles("ADMIN"), menuController.getAll);
 
 // Create menu item
 router.post(
@@ -112,18 +116,10 @@ router.patch(
 );
 
 // Toggle item availability
-router.patch(
-  "/menu/:id/toggle",
-  allowRoles("ADMIN"),
-  menuController.toggle
-);
+router.patch("/menu/:id/toggle", allowRoles("ADMIN"), menuController.toggle);
 
 // Delete menu item
-router.delete(
-  "/menu/:id",
-  allowRoles("ADMIN"),
-  menuController.remove
-);
+router.delete("/menu/:id", allowRoles("ADMIN"), menuController.remove);
 
 // Get single menu item
 router.get(
@@ -133,4 +129,3 @@ router.get(
 );
 
 export default router;
-

@@ -11,6 +11,7 @@ import {
   listComplaints,
   updateComplaintStatus,
 } from "../services/complaintService.js";
+import { getWardenDashboardStats } from "../services/statsService.js";
 
 export const getPendingLeaves = catchAsync(async (req, res) => {
   const leaves = await listPendingLeaves();
@@ -55,4 +56,12 @@ export const updateComplaint = catchAsync(async (req, res) => {
   const { status, remarks } = req.body;
   const complaint = await updateComplaintStatus(req.params.id, status, remarks);
   res.json({ complaint });
+});
+
+export const getDashboardStats = catchAsync(async (req, res) => {
+  const stats = await getWardenDashboardStats();
+  res.json({
+    success: true,
+    data: stats,
+  });
 });

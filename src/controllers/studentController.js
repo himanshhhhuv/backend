@@ -3,6 +3,7 @@ import { getStudentAttendance } from "../services/attendanceService.js";
 import {
   getStudentTransactions,
   getStudentBalance,
+  getStudentWalletSummary,
 } from "../services/canteenService.js";
 import { createLeaveRequest, listLeaves } from "../services/leaveService.js";
 import {
@@ -13,6 +14,7 @@ import {
   getStudentProfile,
   updateStudentProfile,
 } from "../services/profileService.js";
+import { getStudentDashboardStats } from "../services/statsService.js";
 
 export const getProfile = catchAsync(async (req, res) => {
   const profile = await getStudentProfile(req.user.userId);
@@ -53,4 +55,21 @@ export const listStudentComplaints = catchAsync(async (req, res) => {
 export const createStudentComplaint = catchAsync(async (req, res) => {
   const complaint = await createComplaint(req.user.userId, req.body);
   res.status(201).json({ complaint });
+});
+
+export const getDashboardStats = catchAsync(async (req, res) => {
+  const userId = req.user.userId;
+
+  const [stats, wallet] = await Promise.all([
+    getStudentDashboardStats(userId),
+    getStudentWalletSummary(userId),
+  ]);
+
+  res.json({
+    success: true,
+    data: {
+      ...stats,
+      wallet,
+    },
+  });
 });
