@@ -6,6 +6,7 @@ import {
 import {
   markAttendanceBulk,
   getStudentAttendance,
+  getStudentsWithAttendance,
 } from "../services/attendanceService.js";
 import {
   listComplaints,
@@ -63,5 +64,14 @@ export const getDashboardStats = catchAsync(async (req, res) => {
   res.json({
     success: true,
     data: stats,
+  });
+});
+
+export const getStudentsList = catchAsync(async (req, res) => {
+  const { date } = req.query;
+  const students = await getStudentsWithAttendance(date);
+  res.json({
+    success: true,
+    data: students,
   });
 });

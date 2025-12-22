@@ -12,6 +12,7 @@ import {
   listAllComplaints,
   updateComplaint,
   getDashboardStats,
+  getStudentsList,
 } from "../controllers/wardenController.js";
 
 const router = Router();
@@ -30,6 +31,7 @@ router.patch(
   validate(leaveSchemas.updateStatus),
   rejectLeave
 );
+router.get("/students", getStudentsList);
 router.post("/attendance/mark", markAttendance);
 router.get("/attendance/:studentId", getStudentAttendanceById);
 router.get("/complaints", listAllComplaints);

@@ -159,3 +159,86 @@ export const markAttendanceBulk = async (records) => {
 
   return createdRecords;
 };
+
+/**
+ * Get all students with their attendance status for a specific date
+ * @param {Date} date - Date to check attendance for (defaults to today)
+ * @returns {Array} - Array of students with their attendance status
+ */
+export const getStudentsWithAttendance = async (date = null) => {
+  const targetDate = date ? new Date(date) : new Date();
+  targetDate.setHours(0, 0, 0, 0);
+  const nextDay = new Date(targetDate);
+  nextDay.setDate(nextDay.getDate() + 1);
+
+  // Get all students
+  const students = await prisma.user.findMany({
+    where: {
+      role: "STUDENT",
+    },
+    select: {
+      id: true,
+      email: true,
+      profile: {
+        select: {
+          name: true,
+          rollNo: true,
+          course: true,
+          year: true,
+        },
+      },
+      room: {
+        select: {
+          roomNo: true,
+          floor: true,
+        },
+      },
+    },
+    orderBy: {
+      profile: {
+        rollNo: "asc",
+      },
+    },
+  });
+
+  // Get today's attendance for all students
+  const attendanceRecords = await prisma.attendance.findMany({
+    where: {
+      date: {
+        gte: targetDate,
+        lt: nextDay,
+      },
+    },
+    select: {
+      id: true,
+      studentId: true,
+      status: true,
+      inTime: true,
+      outTime: true,
+    },
+  });
+
+  // Create a map of studentId -> attendance
+  const attendanceMap = new Map();
+  attendanceRecords.forEach((record) => {
+    attendanceMap.set(record.studentId, record);
+  });
+
+  // Combine students with their attendance status
+  const studentsWithAttendance = students.map((student) => {
+    const attendance = attendanceMap.get(student.id);
+    return {
+      ...student,
+      attendance: attendance
+        ? {
+            id: attendance.id,
+            status: attendance.status,
+            inTime: attendance.inTime,
+            outTime: attendance.outTime,
+          }
+        : null,
+    };
+  });
+
+  return studentsWithAttendance;
+};
