@@ -1,4 +1,5 @@
 import catchAsync from "../utils/catchAsync.js";
+import prisma from "../prisma/client.js";
 import {
   getStudentTransactions,
   getStudentBalance,
@@ -124,5 +125,67 @@ export const getDashboardStats = catchAsync(async (req, res) => {
   res.json({
     success: true,
     data: stats,
+  });
+});
+
+/**
+ * Lookup student by roll number (for POS billing)
+ * Returns student info with wallet balance
+ */
+export const lookupStudent = catchAsync(async (req, res) => {
+  const { rollNo } = req.params;
+
+  if (!rollNo) {
+    return res.status(400).json({
+      success: false,
+      message: "Roll number is required",
+    });
+  }
+
+  // Find student by roll number
+  const profile = await prisma.profile.findUnique({
+    where: { rollNo },
+    include: {
+      user: {
+        select: {
+          id: true,
+          email: true,
+          role: true,
+        },
+      },
+    },
+  });
+
+  if (!profile) {
+    return res.status(404).json({
+      success: false,
+      message: `Student with roll number "${rollNo}" not found`,
+    });
+  }
+
+  if (profile.user.role !== "STUDENT") {
+    return res.status(400).json({
+      success: false,
+      message: "Only students can be looked up",
+    });
+  }
+
+  // Get wallet balance
+  const walletBalance = await getStudentBalance(profile.user.id);
+
+  res.json({
+    success: true,
+    student: {
+      id: profile.user.id,
+      email: profile.user.email,
+      profile: {
+        name: profile.name,
+        rollNo: profile.rollNo,
+        phone: profile.phone,
+        course: profile.course,
+        year: profile.year,
+      },
+      walletBalance,
+    },
   });
 });

@@ -4,7 +4,10 @@ import { validate } from "../middleware/validate.js";
 import { menuSchemas, orderSchemas } from "../validations/menuValidation.js";
 import * as menuController from "../controllers/menuController.js";
 import * as foodOrderController from "../controllers/foodOrderController.js";
-import { getDashboardStats as getCanteenDashboardStats } from "../controllers/canteenController.js";
+import {
+  getDashboardStats as getCanteenDashboardStats,
+  lookupStudent,
+} from "../controllers/canteenController.js";
 
 const router = Router();
 
@@ -41,6 +44,21 @@ router.post(
   allowRoles("CANTEEN_MANAGER", "ADMIN"),
   validate(orderSchemas.createOrderByRollNo),
   foodOrderController.createOrderQuick
+);
+
+// Quick billing endpoint (alias for /orders/quick)
+router.post(
+  "/billing",
+  allowRoles("CANTEEN_MANAGER", "ADMIN"),
+  validate(orderSchemas.createOrderByRollNo),
+  foodOrderController.createOrderQuick
+);
+
+// Lookup student by roll number (for POS)
+router.get(
+  "/lookup/:rollNo",
+  allowRoles("CANTEEN_MANAGER", "ADMIN"),
+  lookupStudent
 );
 
 // Get all orders (for manager dashboard)

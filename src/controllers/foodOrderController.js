@@ -16,9 +16,13 @@ export const createOrder = catchAsync(async (req, res) => {
   const managerId = req.user.userId;
   const result = await createFoodOrder(req.body, managerId);
 
-  let message = `Order ${result.order.orderNumber} created. ₹${result.order.totalAmount.toFixed(2)} deducted.`;
+  let message = `Order ${
+    result.order.orderNumber
+  } created. ₹${result.order.totalAmount.toFixed(2)} deducted.`;
   if (result.lowBalanceWarning) {
-    message += ` ⚠️ Student has low balance (₹${result.receipt.newBalance.toFixed(2)})`;
+    message += ` ⚠️ Student has low balance (₹${result.receipt.newBalance.toFixed(
+      2
+    )})`;
   }
 
   res.status(201).json({
@@ -40,19 +44,20 @@ export const createOrderQuick = catchAsync(async (req, res) => {
   const managerId = req.user.userId;
   const result = await createOrderByRollNo(req.body, managerId);
 
-  let message = `Order ${result.order.orderNumber} created for ${result.receipt.studentName}. ₹${result.order.totalAmount.toFixed(2)} deducted.`;
+  let message = `Order ${result.order.orderNumber} created for ${
+    result.receipt.studentName
+  }. ₹${result.order.totalAmount.toFixed(2)} deducted.`;
   if (result.lowBalanceWarning) {
     message += ` ⚠️ Low balance alert sent!`;
   }
 
+  // Return order at top level for POS frontend compatibility
   res.status(201).json({
     success: true,
     message,
-    data: {
-      order: result.order,
-      receipt: result.receipt,
-      lowBalanceWarning: result.lowBalanceWarning,
-    },
+    order: result.order,
+    receipt: result.receipt,
+    lowBalanceWarning: result.lowBalanceWarning,
   });
 });
 
@@ -141,4 +146,3 @@ export const todaySummary = catchAsync(async (req, res) => {
     data: summary,
   });
 });
-
