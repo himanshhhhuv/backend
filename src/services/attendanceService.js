@@ -4,33 +4,44 @@ import ApiError from "../utils/ApiError.js";
 /**
  * Get attendance records for a specific student
  * @param {string} studentId - Student's user ID
+ * @param {Object} options - Optional filters
+ * @param {Date} options.date - Optional date to filter by (YYYY-MM-DD string or Date object)
  * @returns {Array} - Array of attendance records sorted by date (newest first)
  */
-export const getStudentAttendance = async (studentId) => {
+export const getStudentAttendance = async (studentId, options = {}) => {
   if (!studentId) {
     throw new ApiError(400, "Student ID is required");
   }
 
+  const where = {
+    studentId,
+  };
+
+  // Add date filter if provided
+  if (options.date) {
+    const targetDate = new Date(options.date);
+    targetDate.setHours(0, 0, 0, 0);
+    const nextDay = new Date(targetDate);
+    nextDay.setDate(nextDay.getDate() + 1);
+
+    where.date = {
+      gte: targetDate,
+      lt: nextDay,
+    };
+  }
+
   const attendance = await prisma.attendance.findMany({
-    where: {
-      studentId,
-    },
+    where,
     orderBy: {
       date: "desc",
     },
-    include: {
-      student: {
-        select: {
-          id: true,
-          email: true,
-          profile: {
-            select: {
-              name: true,
-              rollNo: true,
-            },
-          },
-        },
-      },
+    select: {
+      id: true,
+      date: true,
+      status: true,
+      inTime: true,
+      outTime: true,
+      studentId: true,
     },
   });
 

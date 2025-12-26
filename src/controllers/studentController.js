@@ -27,8 +27,21 @@ export const updateProfile = catchAsync(async (req, res) => {
 });
 
 export const getAttendance = catchAsync(async (req, res) => {
-  const attendance = await getStudentAttendance(req.user.userId);
-  res.json({ attendance });
+  const { date } = req.query;
+
+  const options = {};
+  if (date) {
+    options.date = date;
+  }
+
+  const attendance = await getStudentAttendance(req.user.userId, options);
+
+  res.json({
+    success: true,
+    data: {
+      attendance,
+    },
+  });
 });
 
 export const getCanteenSummary = catchAsync(async (req, res) => {
