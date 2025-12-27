@@ -7,12 +7,19 @@ import ApiError from "../utils/ApiError.js";
 export const createMenuItem = async (data) => {
   const { name, category, price, unit, isAvailable } = data;
 
-  // Check if item with same name exists
+  // Check if item with same name exists (only check available items or all items)
   const existing = await prisma.menuItem.findFirst({
     where: { name: { equals: name, mode: "insensitive" } },
   });
 
   if (existing) {
+    // If existing item is disabled, provide a more helpful error message
+    if (!existing.isAvailable) {
+      throw new ApiError(
+        400,
+        `Menu item "${name}" already exists but is currently disabled. Please enable the existing item instead or use a different name.`
+      );
+    }
     throw new ApiError(400, `Menu item "${name}" already exists`);
   }
 
@@ -242,4 +249,3 @@ export const bulkUpdatePrices = async (updates) => {
 
   return { updated: results.length, items: results };
 };
-
