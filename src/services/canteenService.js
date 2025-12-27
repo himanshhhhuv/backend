@@ -111,6 +111,32 @@ export const getAllTransactions = async (filters = {}) => {
             },
           },
         },
+        foodOrder: {
+          select: {
+            id: true,
+            orderNumber: true,
+            mealType: true,
+            totalAmount: true,
+            createdAt: true,
+            items: {
+              select: {
+                itemName: true,
+                quantity: true,
+                unitPrice: true,
+                subtotal: true,
+              },
+            },
+            servedBy: {
+              select: {
+                profile: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
       orderBy: { date: "desc" },
       skip,
