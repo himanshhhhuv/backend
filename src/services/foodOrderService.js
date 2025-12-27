@@ -62,7 +62,10 @@ export const createFoodOrder = async (orderData, managerId) => {
   if (menuItems.length !== menuItemIds.length) {
     const foundIds = menuItems.map((m) => m.id);
     const missingIds = menuItemIds.filter((id) => !foundIds.includes(id));
-    throw new ApiError(400, `Some menu items are not available: ${missingIds.join(", ")}`);
+    throw new ApiError(
+      400,
+      `Some menu items are not available: ${missingIds.join(", ")}`
+    );
   }
 
   // Calculate order items with subtotals
@@ -94,7 +97,9 @@ export const createFoodOrder = async (orderData, managerId) => {
   if (currentBalance < totalAmount) {
     throw new ApiError(
       400,
-      `Insufficient balance. Current: ₹${currentBalance.toFixed(2)}, Required: ₹${totalAmount.toFixed(2)}`
+      `Insufficient balance. Current: ₹${currentBalance.toFixed(
+        2
+      )}, Required: ₹${totalAmount.toFixed(2)}`
     );
   }
 
@@ -186,32 +191,33 @@ export const createFoodOrder = async (orderData, managerId) => {
     date: result.foodOrder.createdAt,
   };
 
-  // Send transaction email
-  try {
-    await sendTransactionEmail({
+  // Send transaction email (non-blocking - fire and forget)
+  sendTransactionEmail({
+    studentEmail: student.email,
+    studentName: student.profile?.name || "Student",
+    transactionType: "DEBIT",
+    amount: totalAmount,
+    description: `Canteen ${mealType}: ${orderItems
+      .map((i) => `${i.itemName} x${i.quantity}`)
+      .join(", ")}`,
+    balance: newBalance,
+  }).catch((emailError) => {
+    console.error("Failed to send transaction email:", emailError);
+  });
+
+  // Send low balance warning if needed (non-blocking - fire and forget)
+  if (newBalance < LOW_BALANCE_THRESHOLD) {
+    sendLowBalanceEmail({
       studentEmail: student.email,
       studentName: student.profile?.name || "Student",
-      transactionType: "DEBIT",
-      amount: totalAmount,
-      description: `Canteen ${mealType}: ${orderItems.map((i) => `${i.itemName} x${i.quantity}`).join(", ")}`,
       balance: newBalance,
-    });
-  } catch (emailError) {
-    console.error("Failed to send transaction email:", emailError);
-  }
-
-  // Send low balance warning if needed
-  if (newBalance < LOW_BALANCE_THRESHOLD) {
-    try {
-      await sendLowBalanceEmail({
-        studentEmail: student.email,
-        studentName: student.profile?.name || "Student",
-        balance: newBalance,
+    })
+      .then(() => {
+        console.log(`⚠️ Low balance alert sent to ${student.email}`);
+      })
+      .catch((emailError) => {
+        console.error("Failed to send low balance email:", emailError);
       });
-      console.log(`⚠️ Low balance alert sent to ${student.email}`);
-    } catch (emailError) {
-      console.error("Failed to send low balance email:", emailError);
-    }
   }
 
   return {
@@ -319,7 +325,14 @@ export const getStudentOrders = async (studentId, filters = {}) => {
  * Get all orders (Admin/Manager)
  */
 export const getAllOrders = async (filters = {}) => {
-  const { studentId, mealType, startDate, endDate, page = 1, limit = 20 } = filters;
+  const {
+    studentId,
+    mealType,
+    startDate,
+    endDate,
+    page = 1,
+    limit = 20,
+  } = filters;
 
   const where = {};
 
@@ -393,34 +406,35 @@ export const getTodaysSummary = async () => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const [ordersCount, totalRevenue, mealTypeBreakdown, popularItems] = await Promise.all([
-    // Total orders today
-    prisma.foodOrder.count({
-      where: { createdAt: { gte: today } },
-    }),
-    // Total revenue today
-    prisma.foodOrder.aggregate({
-      where: { createdAt: { gte: today } },
-      _sum: { totalAmount: true },
-    }),
-    // Breakdown by meal type
-    prisma.foodOrder.groupBy({
-      by: ["mealType"],
-      where: { createdAt: { gte: today } },
-      _count: true,
-      _sum: { totalAmount: true },
-    }),
-    // Popular items today
-    prisma.orderItem.groupBy({
-      by: ["itemName"],
-      where: {
-        order: { createdAt: { gte: today } },
-      },
-      _sum: { quantity: true },
-      orderBy: { _sum: { quantity: "desc" } },
-      take: 5,
-    }),
-  ]);
+  const [ordersCount, totalRevenue, mealTypeBreakdown, popularItems] =
+    await Promise.all([
+      // Total orders today
+      prisma.foodOrder.count({
+        where: { createdAt: { gte: today } },
+      }),
+      // Total revenue today
+      prisma.foodOrder.aggregate({
+        where: { createdAt: { gte: today } },
+        _sum: { totalAmount: true },
+      }),
+      // Breakdown by meal type
+      prisma.foodOrder.groupBy({
+        by: ["mealType"],
+        where: { createdAt: { gte: today } },
+        _count: true,
+        _sum: { totalAmount: true },
+      }),
+      // Popular items today
+      prisma.orderItem.groupBy({
+        by: ["itemName"],
+        where: {
+          order: { createdAt: { gte: today } },
+        },
+        _sum: { quantity: true },
+        orderBy: { _sum: { quantity: "desc" } },
+        take: 5,
+      }),
+    ]);
 
   return {
     ordersCount,
@@ -471,4 +485,3 @@ export const createOrderByRollNo = async (orderData, managerId) => {
     managerId
   );
 };
-
