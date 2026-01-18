@@ -83,6 +83,7 @@ export const getCorsOptions = () => {
   // In development, allow localhost origins
   if (process.env.NODE_ENV === "development") {
     allowedOrigins.push(
+      "https://atlashms.vercel.app",
       "http://localhost:3000",
       "http://localhost:5173",
       "http://localhost:5174",
@@ -112,7 +113,12 @@ export const getCorsOptions = () => {
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "ngrok-skip-browser-warning",
+    ],
     exposedHeaders: [
       "RateLimit-Limit",
       "RateLimit-Remaining",
