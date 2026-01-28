@@ -30,6 +30,5 @@ Thumbs.db
 dist/
 build/
 
-# Prisma
-migrations/
+# Prisma (keep migrations/ in repo so deploy can run them)
 
