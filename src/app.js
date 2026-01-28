@@ -20,6 +20,9 @@ import {
 
 const app = express();
 
+// Trust proxy (required behind Railway/nginx/load balancers for rate limit & client IP)
+app.set("trust proxy", 1);
+
 // =========================
 // SECURITY MIDDLEWARE
 // =========================
